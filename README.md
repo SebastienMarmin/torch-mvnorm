@@ -1,2 +1,2 @@
 # torch-mvnorm
-Multivariate normal CDF computation for tensors. Implementation of closed form derivatives.
+Multivariate normal CDF computation for tensors with implementation of closed form derivatives.
