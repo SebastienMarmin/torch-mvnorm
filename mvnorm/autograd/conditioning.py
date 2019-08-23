@@ -1,6 +1,7 @@
 from torch import matmul, cat,tril,triu, diagonal
 
-def one_component_conditioning(c,x=None,m=None,var = None, reduce=True,cov2cor=False): # var if it is already extracted from C
+def one_component_conditioning(c,x=None,m=None,var = None, reduce=True,cov2cor=False):
+    # var if it is already extracted from C
     d = c.size(-1)
     v = diagonal(c,dim1=-2,dim2=-1) if var is None else var
     c_v = c/v.unsqueeze(-1)
@@ -21,7 +22,7 @@ def one_component_conditioning(c,x=None,m=None,var = None, reduce=True,cov2cor=F
     else:
         m_cond = m_c
         c_cond = c_c
-    return m_cond,c_cond
+    return m_cond, c_cond
 
 def remove_slice(M,i,dim=-1):
     if dim==-1:
@@ -39,9 +40,9 @@ def remove_slice(M,i,dim=-1):
     else:
         raise NotImplementedError("dim must be -1, -2, -3, 0, 1 or 2.")
 
-def two_components_conditioning(c,x=None,m=None,var = None):
+def two_components_conditioning(c,x=None,m=None,var = None,cov2cor=False):
     d = x.size(-1)
-    m_cond1, c_cond1 = one_component_conditioning(c,x,m,var=var,reduce=True)
+    m_cond1, c_cond1 = one_component_conditioning(c,x,m,var=var,reduce=True,cov2cor=False)
     m_cond2 = []
     c_cond2 = []
     for i in range(1,d):
@@ -61,14 +62,22 @@ def two_components_conditioning(c,x=None,m=None,var = None):
             C_cicj = C_cimjmj - matmul(C_cimjj.unsqueeze(-1),C_cimjj.unsqueeze(-1).transpose(-1,-2))/C_cijj.unsqueeze(-1).unsqueeze(-1)
             m_cond2 += [m_cicj]
             c_cond2 += [C_cicj]
+    if cov2cor:
+        stds1 = diagonal(c_cond1,dim1=-2,dim2=-1).sqrt()
+        m_cond1 = m_cond1/stds1
+        c_cond1 = (c_cond1/stds1.unsqueeze(-1))/stds1.unsqueeze(-2)
+        stds2 = diagonal(c_cond2,dim1=-2,dim2=-1).sqrt()
+        m_cond2 = m_cond2/stds2
+        c_cond2 = (c_cond2/stds2.unsqueeze(-1))/stds2.unsqueeze(-2)
     return m_cond1, c_cond1, m_cond2, c_cond2
     
 
 if __name__ == "__main__":
+    """
     import torch
     d = 5
     bd = [2,3]
-    values = torch.randn(*bd,d)
+    values = torch.randn(*bd,d,requires_grad = True)
     A = torch.randn(*bd,d,d)
     C = torch.matmul(A,A.transpose(-2,-1))
     mean = torch.randn(*bd,d)
@@ -122,14 +131,7 @@ if __name__ == "__main__":
             #print("mm = "+str(m_cond))
             #print("cc = "+str(c_cond))
             ij = ij+1
-    """
-    def two_components_conditioning(x,m,c):
-        v = torch.diagonal(c,dim1=-2,dim2=-1)
-        det = v.unsqueeze(-2)*v.unsqueeze(-1)-c**2
-        diff = x-m
-        res = det
-        return res,res
-    """
+
 
 
 
@@ -138,3 +140,17 @@ if __name__ == "__main__":
     print("mm_D = "+str(mm_D))
     print("cc = "+str(cc))
     print("cc_D = "+str(cc_D))
+
+    """
+
+    import torch
+    d = 5
+    bd = [2,3]
+    values = torch.randn(*bd,d,requires_grad = True)
+    A = torch.randn(*bd,d,d)
+    C = torch.matmul(A,A.transpose(-2,-1))
+    mean = torch.randn(*bd,d)
+    mm2, cc2 =  one_component_conditioning(C,values,mean,reduce=False)
+    from torch.autograd import grad
+    print(mm2.mean())
+    print(grad(mm2.mean(),(values)))

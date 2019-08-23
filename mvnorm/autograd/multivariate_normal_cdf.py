@@ -1,8 +1,8 @@
 
 from .conditioning import one_component_conditioning
 from numpy import array, zeros as np_zeros, int32, tril_indices, float64, broadcast_to
-from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros
-from torch.autograd import Function
+from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros, ones_like # onely for dev
+from torch.autograd import Function, grad # only for test
 
 from mvnorm import genz_bretz
 from mvnorm.hyperrectangle_integral import hyperrectangle_integral
@@ -19,6 +19,7 @@ if N_JOBS > 1:
 MAXPTS = 25000
 ABSEPS = 0.001
 RELEPS = 0
+
 
 
 def phi(z,s):
@@ -50,23 +51,23 @@ def _parallel_CDF(x,correlation,maxpts,abseps,releps):
     c = broadcast_to(corre,shape2).reshape(N,dd)
     # Note: need to make repetitions for l and i even if they are constant to handle parallel
     # runs of Fortran code. We don't want several pointers to the same memory location.
+    print(" of dim "+str(d))
     if N_JOBS>1:
         p = Parallel(n_jobs=N_JOBS,prefer="threads")(
             delayed(genz_bretz)(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,0) for j in range(N))
     else:
         p = (genz_bretz(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,0) for j in range(N))
-    return tensor(tuple(p),dtype = x.dtype,device = x.device).view(batch_shape)
+    out = tensor(tuple(p),dtype = x.dtype,device = x.device).view(batch_shape)    
+    return out
 
 class MultivariateNormalCDF(Function):
 
     @staticmethod
-    def forward(ctx, x,c,m,maxpts,abseps,releps):
+    def forward(ctx, val,c,maxpts,abseps,releps):
         # input infos
         ctx.maxpts   = maxpts
         ctx.abseps   = abseps
         ctx.releps   = releps
-        ctx.m_is_None = m is None
-        val = x if ctx.m_is_None else x-m
         ctx.save_for_backward(val,c) # m.data is not needed for gradient computation
         stds = diagonal(c,dim1=-2,dim2=-1).sqrt()
         ctx.stds = stds
@@ -77,34 +78,41 @@ class MultivariateNormalCDF(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        m_is_None = ctx.m_is_None
         val,c = ctx.saved_tensors
         d = val.size(-1)
-        grad_x = grad_c = grad_m = None
-        need_x, need_c, need_m = ctx.needs_input_grad[:3]
+        grad_x = grad_c = None
+        need_x, need_c = ctx.needs_input_grad[:2]
         p = phi(val,ctx.stds)
-        m_cond,c_c_l = one_component_conditioning(c,m = val, var = ctx.stds**2,cov2cor=True)
-        m_c_l = unbind(m_cond,-2)
-        P_l= (_parallel_CDF(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
-        P = cat(tuple(P_l),-1)
+        if need_c:
+            m_cond,c_c_l,m_c_l2,c_c_l2, two_components_conditioning(c,x=None,m=None,var = None,cov2cor=False)
+        else:
+            m_cond,c_c_l = one_component_conditioning(c,m = val, var = ctx.stds**2,cov2cor=True)
+        #m_c_l = unbind(m_cond,-2)
+        c_cond = cat(tuple(c_c_l[i].unsqueeze(-3) for i in range(d)),-3)
+        #P_l= (_parallel_CDF(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
+        P = CDFapp(m_cond,c_cond,ctx.maxpts,ctx.abseps,ctx.releps)
+        #P_l= (CDFapp(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
+        #P = cat(tuple(P_l),-1)
         res = grad_output.unsqueeze(-1)*P*p
         if need_x:
             grad_x = res
-        if need_m:
-            grad_m = -res
         if need_c:
+            m_cond2 = cat(tuple(m_c_l2[i].unsqueeze(-2) for i in range(d)),-2)
+            c_cond2 = cat(tuple(c_c_l2[i].unsqueeze(-3) for i in range(d)),-3)
+            dd = d*(d-1)/2
+            Q_l= CDFapp(m_cond2,c_cond2,ctx.maxpts,ctx.abseps,ctx.releps)
             raise NotImplementedError("Deriv w.r.t. cov is not implemented yet.")
         #if bias is not None and ctx.needs_input_grad[2]:
-        return grad_x, grad_c, grad_m, None, None, None
+        return grad_x, grad_c, None, None, None
        
-
+# Create functional linked with autograd machinerie.
 CDFapp = MultivariateNormalCDF.apply
 
 def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
     if (covariance_matrix is not None) + (scale_tril is not None) != 1:
         raise ValueError("Exactly one of sigma or scale_tril may be specified.")
     mat  = scale_tril if covariance_matrix is None else covariance_matrix
-    device, dtype = mat.device, mat.dtype   
+    device, dtype = mat.device, mat.dtype
     d = mat.size(-1)     
     if loc is None:
         loc = torch_zeros(d,device=device,dtype=dtype)
@@ -137,7 +145,7 @@ def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,me
                 if releps is None:
                     releps = RELEPS
                 c =  matmul(scale_tril,scale_tril.transose(-1,-2)) if covariance_matrix is None else covariance_matrix
-                value =  CDFapp(x,c,loc,maxpts,abseps,releps)
+                value =  CDFapp(x-loc,c,maxpts,abseps,releps)
                 error = -1
         else:
             if x.requires_grad or loc.requires_grad or mat.requires_grad:
