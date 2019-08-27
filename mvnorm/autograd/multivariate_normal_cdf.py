@@ -147,3 +147,4 @@ def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,me
             warn("Estimated error is higher than abseps. Consider raising the computation budget (nmc for method='MonteCarlo' or maxpts for 'GenzBretz'). Switch 'error_info' to False to ignore.")
     return value, error
 
+# TODO hyperrectangle function similar with info. Remove info from cdf

@@ -4,7 +4,7 @@ from operator import mul
 from itertools import zip_longest
 
 from mvnorm import genz_bretz
-from numpy import array, zeros as np_zeros, int32, tril_indices, float64, broadcast_to,Inf
+from numpy import array, zeros as np_zeros, int32, tril_indices, float64,broadcast, broadcast_to,Inf
 from torch import tensor, int32 as torch_int32, float32 as torch_float32
 
 
@@ -21,6 +21,7 @@ def _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=False):
     # Note: need to make repetitions for l and i even if they are constant to handle parallel
     # runs of Fortran code. We don't want several pointers to the same memory location.
     infint = 1 if info else 0
+    d = l.shape[1]
     N = l.shape[0]
     if N_JOBS>1:
         p = Parallel(n_jobs=N_JOBS,prefer="threads")(
@@ -69,34 +70,40 @@ def _parallel_hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,r
     low = lower.numpy().astype(float64)
     upp = upper.numpy().astype(float64)
     cor = correlation.numpy()[...,trind[0],trind[1]].astype(float64)
-    batch_shape = broadcast(low[...,0],upp[...,0],cor[...,0,0]).shape
+    batch_shape = broadcast(low[...,0],upp[...,0],cor[...,0]).shape
     dd = d*(d-1)//2
-    shape1 = batch_shape+[d]
-    shape2 = batch_shape+[dd]
+    shape1 = list(batch_shape)+[d]
+    shape2 = list(batch_shape)+[dd]
     l = broadcast_to(low,shape1).reshape(-1,d)
-    N = u.shape[0]
+    N = l.shape[0]
     u = broadcast_to(upp,shape1).reshape(N,d)
-    c = broadcast_to(corre,shape2).reshape(N,dd)
-    infin = np.array(tuple(2 for i in range(d))).astype(int32)
+    c = broadcast_to(cor,shape2).reshape(N,dd)
+    infin = array(tuple(2 for i in range(d))).astype(int32)
     i = broadcast_to(infin,[N,d])
     # infin is a int vector to pass to the fortran code controlling the integral limits
     #            if INFIN(I) < 0, Ith limits are (-infinity, infinity);
     #            if INFIN(I) = 0, Ith limits are (-infinity, UPPER(I)];
     #            if INFIN(I) = 1, Ith limits are [LOWER(I), infinity);
     #            if INFIN(I) = 2, Ith limits are [LOWER(I), UPPER(I)].
-    infl = lower==-Inf 
-    infu = upper==Inf
-    infin[infl] = 0
-    infin[infu] = 1
-    infin[infl*infu] = -1 # basically ignores these componenents
+    infl = l==-Inf 
+    infu = u==Inf
+    i.setflags(write=1)
+    i[infl] = 0
+    i[infu] = 1
+    i[infl*infu] = -1 # basically ignores these componenents
     # now that this info is stored, we get rid of the numpy.Inf's
     #  (they are user-friendly but not understood in Fortran)
-    lower[infl] = 0
-    upper[infu] = 0
+    l.setflags(write=1)
+    l[infl] = 0
+    u.setflags(write=1)
+    u[infu] = 0
+
     # TODO better to build res and assign or build-reshap?
     values, errors, infos = _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=True)
     # for skipping `info` use _parallel_CDF
-    return (tensor(values,dtype = x.dtype,device = x.device).view(batch_shape),
-            tensor(errors,dtype = torch_float32,device = x.device).view(batch_shape),
-            tensor(infos, dtype = torch_int32,device = x.device).view(batch_shape))
+    dtype  = correlation.dtype
+    device = correlation.device
+    return (tensor(values,dtype = dtype,device = device).view(batch_shape),
+            tensor(errors,dtype = torch_float32,device = device).view(batch_shape),
+            tensor(infos, dtype = torch_int32,device = device).view(batch_shape))
 
