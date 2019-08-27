@@ -1,7 +1,7 @@
 
-from .conditioning import one_component_conditioning
+from .conditioning import one_component_conditioning, two_components_conditioning
 from numpy import array, zeros as np_zeros, int32, tril_indices, float64, broadcast_to
-from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros, ones_like # onely for dev
+from torch import tensor, diagonal, cat, unbind, ones as torch_ones, zeros as torch_zeros, ones_like, tril_indices as torch_tril_indices, triu_indices as torch_triu_indices,tril,triu,diag_embed # onely for dev
 from torch.autograd import Function, grad # only for test
 
 from mvnorm import genz_bretz
@@ -25,6 +25,18 @@ RELEPS = 0
 def phi(z,s):
     return 0.39894228040143270286321808271/s*(-z**2/(2*s**2)).exp()
 #                 ^ oneOverSqrt2pi     
+ 
+def phi2_sub(z,C): # compute pairs of bivariate densities and organize them in a matrix
+    V = diagonal(C,dim1=-2,dim2=-1)
+    a,c = V.unsqueeze(-1),V.unsqueeze(-2)
+    det = a*c-C**2
+    x1 = z.unsqueeze(-1)
+    x2 = z.unsqueeze(-2)
+    exponent = -0.5/det*(c*x1**2+a*x2**2-2*C*x1*x2)
+    res = 0.15915494309189534560822210096/det.sqrt()*(exponent).exp()
+    #           ^ oneOver2pi     
+    return tril(res,-1) + triu(res,1)
+ 
 
 def broadcast_shape(a,b):
     res = reversed(tuple(i if j==1 else (j if i==1 else (i if i==j else -1)) for i,j in zip_longest(reversed(a),reversed(b),fillvalue=1)))
@@ -83,25 +95,35 @@ class MultivariateNormalCDF(Function):
         grad_x = grad_c = None
         need_x, need_c = ctx.needs_input_grad[:2]
         p = phi(val,ctx.stds)
+        var = ctx.stds**2
         if need_c:
-            m_cond,c_c_l,m_c_l2,c_c_l2, two_components_conditioning(c,x=None,m=None,var = None,cov2cor=False)
+            m_cond,c_cond,m_cond2,c_cond2= two_components_conditioning(c,x=None,m=val,var = var,cov2cor=True)
         else:
-            m_cond,c_c_l = one_component_conditioning(c,m = val, var = ctx.stds**2,cov2cor=True)
+            m_cond,c_cond = one_component_conditioning(c,m = val, var = var,cov2cor=True)
         #m_c_l = unbind(m_cond,-2)
-        c_cond = cat(tuple(c_c_l[i].unsqueeze(-3) for i in range(d)),-3)
+        #c_cond = cat(tuple(c_c_l[i].unsqueeze(-3) for i in range(d)),-3)
         #P_l= (_parallel_CDF(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
-        P = CDFapp(m_cond,c_cond,ctx.maxpts,ctx.abseps,ctx.releps)
+        P = _parallel_CDF(m_cond,c_cond,ctx.maxpts,ctx.abseps,ctx.releps)
         #P_l= (CDFapp(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
         #P = cat(tuple(P_l),-1)
         res = grad_output.unsqueeze(-1)*P*p
         if need_x:
             grad_x = res
         if need_c:
-            m_cond2 = cat(tuple(m_c_l2[i].unsqueeze(-2) for i in range(d)),-2)
-            c_cond2 = cat(tuple(c_c_l2[i].unsqueeze(-3) for i in range(d)),-3)
-            dd = d*(d-1)/2
-            Q_l= CDFapp(m_cond2,c_cond2,ctx.maxpts,ctx.abseps,ctx.releps)
-            raise NotImplementedError("Deriv w.r.t. cov is not implemented yet.")
+            #dd = d*(d-1)//2
+            #m_cond2 = cat(tuple(m_c_l2[i].unsqueeze(-2) for i in range(dd)),-2)
+            #c_cond2 = cat(tuple(c_c_l2[i].unsqueeze(-3) for i in range(dd)),-3)
+            
+            Q_l = _parallel_CDF(m_cond2,c_cond2,ctx.maxpts,ctx.abseps,ctx.releps)
+            Q = torch_zeros(*Q_l.shape[:-1],d,d)
+            trilind = torch_tril_indices(d,d,offset=-1)
+            triuind = torch_triu_indices(d,d,offset =1)
+            Q[...,trilind[0],trilind[1]] = Q_l
+            Q[...,triuind[0],triuind[1]] = Q_l
+            q = phi2_sub(val,c)
+            hess = q*Q
+            D = -(val*res+(hess*c).sum(-1))/var
+            grad_c = hess + diag_embed(D)
         #if bias is not None and ctx.needs_input_grad[2]:
         return grad_x, grad_c, None, None, None
        

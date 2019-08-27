@@ -18,7 +18,7 @@ def one_component_conditioning(c,x=None,m=None,var = None, reduce=True,cov2cor=F
     if reduce:
         m_cond = tril(m_c,-1)[...,:,:-1]+triu(m_c,1)[...,:,1:]
         l = tuple(remove_slice(c_c[...,i,:,:],i,-1) for i in range(d))
-        c_cond = tuple(remove_slice(l[i],i,-2) for i in range(d))
+        c_cond = cat(tuple(remove_slice(l[i],i,-2).unsqueeze(-3) for i in range(d)),-3)
     else:
         m_cond = m_c
         c_cond = c_c
@@ -41,17 +41,17 @@ def remove_slice(M,i,dim=-1):
         raise NotImplementedError("dim must be -1, -2, -3, 0, 1 or 2.")
 
 def two_components_conditioning(c,x=None,m=None,var = None,cov2cor=False):
-    d = x.size(-1)
-    m_cond1, c_cond1 = one_component_conditioning(c,x,m,var=var,reduce=True,cov2cor=False)
-    m_cond2 = []
-    c_cond2 = []
+    d = c.size(-1)
+    m_cond1, c_cond1 = one_component_conditioning(c,x,m,var=var,reduce=True,cov2cor=False) # cov2cor is at the end
+    m_c2 = []
+    c_c2 = []
     for i in range(1,d):
         m_ci = m_cond1[...,i,:]
-        C_ci = c_cond1[i]
-        x_mi  = remove_slice(x,i,-1)
+        C_ci = c_cond1[...,i,:,:]
+        x_mi  = 0 if x is None else remove_slice(x,i,-1)
         for j in range(i):
-            x_mimj = remove_slice(x_mi,j,-1)
-            x_mij =  x_mi[...,j]
+            x_mimj = 0 if x is None else  remove_slice(x_mi,j,-1)
+            x_mij =  0 if x is None else  x_mi[...,j]
             m_cimj = remove_slice(m_ci,j,-1)
             m_cij = m_ci[...,j]
             C_cijj = C_ci[...,j,j]
@@ -60,8 +60,12 @@ def two_components_conditioning(c,x=None,m=None,var = None,cov2cor=False):
             C_cimjj = C_cimj[...,:,j]
             m_cicj = m_cimj + ((x_mij-m_cij)/C_cijj).unsqueeze(-1)*C_cimjj
             C_cicj = C_cimjmj - matmul(C_cimjj.unsqueeze(-1),C_cimjj.unsqueeze(-1).transpose(-1,-2))/C_cijj.unsqueeze(-1).unsqueeze(-1)
-            m_cond2 += [m_cicj]
-            c_cond2 += [C_cicj]
+            m_c2 += [m_cicj]
+            c_c2 += [C_cicj]
+    dd = d*(d-1)//2
+    m_cond2 = cat(tuple(m_c2[i].unsqueeze(-2) for i in range(dd)),-2)
+    c_cond2 = cat(tuple(c_c2[i].unsqueeze(-3) for i in range(dd)),-3)
+
     if cov2cor:
         stds1 = diagonal(c_cond1,dim1=-2,dim2=-1).sqrt()
         m_cond1 = m_cond1/stds1
