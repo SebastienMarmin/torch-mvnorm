@@ -1,19 +1,15 @@
 
 from .conditioning import one_component_conditioning
-from numpy import array, zeros as np_zeros, int32, tril_indices, float64, broadcast_to
+
 from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros
 from torch.autograd import Function
 
-from mvnorm import genz_bretz
+from ..parallel.joblib import _parallel_CDF
 from mvnorm.hyperrectangle_integral import hyperrectangle_integral
 
-from operator import mul
-from itertools import zip_longest
 
-# number of jobs > 1 necessary for high d. Else faster with n_jobs=1.
-N_JOBS = 1
-if N_JOBS > 1:
-    from joblib import Parallel, delayed
+
+
 
 # Default computation-budget parameters that can be changed by the user (see TODO).
 MAXPTS = 25000
@@ -25,37 +21,6 @@ def phi(z,s):
     return 0.39894228040143270286321808271/s*(-z**2/(2*s**2)).exp()
 #                 ^ oneOverSqrt2pi     
 
-def broadcast_shape(a,b):
-    res = reversed(tuple(i if j==1 else (j if i==1 else (i if i==j else -1)) for i,j in zip_longest(reversed(a),reversed(b),fillvalue=1)))
-    return list(res)
-
-def _parallel_CDF(x,correlation,maxpts,abseps,releps):
-    d = correlation.size(-1)
-    ### Convert to numpy
-    lower = np_zeros(d).astype(float64)
-    upper = x.numpy().astype(float64)
-    infin = array(tuple(0 for i in range(d))).astype(int32) 
-    trind = tril_indices(d,-1)
-    corre = correlation.numpy()[...,trind[0],trind[1]].astype(float64)
-    #### Broadcast  
-    batch_shape = broadcast_shape(upper.shape[:-1],corre.shape[:-1])
-    # equivalent to broadcast(upper[...,0],corre[...,0]).shape .
-    dd = d*(d-1)//2
-    shape1 = batch_shape+[d]
-    shape2 = batch_shape+[dd]
-    u = broadcast_to(upper,shape1).reshape(-1,d)
-    N = u.shape[0]
-    l = broadcast_to(lower,[N,d])
-    i = broadcast_to(infin,[N,d])
-    c = broadcast_to(corre,shape2).reshape(N,dd)
-    # Note: need to make repetitions for l and i even if they are constant to handle parallel
-    # runs of Fortran code. We don't want several pointers to the same memory location.
-    if N_JOBS>1:
-        p = Parallel(n_jobs=N_JOBS,prefer="threads")(
-            delayed(genz_bretz)(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,0) for j in range(N))
-    else:
-        p = (genz_bretz(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,0) for j in range(N))
-    return tensor(tuple(p),dtype = x.dtype,device = x.device).view(batch_shape)
 
 class MultivariateNormalCDF(Function):
     """

@@ -62,6 +62,11 @@ def hyperrectangle_integral(lower = None, upper = None, mean = None, corr = None
                 c = (mat/stds.unsqueeze(-1))/stds.unsqueeze(-2)
         infin = np.array(tuple(2 for i in range(d))).astype(int32) 
         # infin is a int vector to pass to the fortran code controlling the integral limits
+        # infin is a int vector to pass to the fortran code controlling the integral limits
+        #            if INFIN(I) < 0, Ith limits are (-infinity, infinity);
+        #            if INFIN(I) = 0, Ith limits are (-infinity, UPPER(I)];
+        #            if INFIN(I) = 1, Ith limits are [LOWER(I), infinity);
+        #            if INFIN(I) = 2, Ith limits are [LOWER(I), UPPER(I)].
         infl = lower==-Inf 
         infu = upper==Inf
         infin[infl] = 0

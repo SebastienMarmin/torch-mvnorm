@@ -5,13 +5,13 @@ from joblib import Parallel, delayed
 import sys
 sys.path.append(".") 
 #sys.path.append("./..") # if this script runs in test folder
-from mvnormpy import genz_benz
+from mvnorm import genz_bretz
 import torch
 import numpy as np
 import time
 
 def g(i):
-    return genz_benz(d,irr,u_list[i],infin,c_list[i],maxpts,abseps,releps,0)
+    return genz_bretz(d,irr,u_list[i],infin,c_list[i],maxpts,abseps,releps,0)
     
 
 rep = 200

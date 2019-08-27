@@ -2,8 +2,8 @@
 import sys
 sys.path.append(".") 
 #sys.path.append("./..") 
-from mvnormpy import hyperrectangle_integral
-from mvnormpy import multivariate_normal_cdf
+from mvnorm import hyperrectangle_integral
+from mvnorm import multivariate_normal_cdf
 import torch
 from torch.distributions import MultivariateNormal
 from torch import randn, matmul

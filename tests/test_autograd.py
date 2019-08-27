@@ -6,7 +6,7 @@ if __name__ == "__main__":
     import torch
     from torch.autograd import grad
     import sys
-    sys.path.append("..")
+    sys.path.append(".")
     from mvnorm.hyperrectangle_integral import hyperrectangle_integral
     from mvnorm.autograd.multivariate_normal_cdf import multivariate_normal_cdf as CDF
     def dPdx_num(x,c, maxpts = 25000, abseps = 0.001, releps = 0):

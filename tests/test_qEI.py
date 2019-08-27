@@ -13,9 +13,9 @@ import matplotlib
 import matplotlib.pylab as plt
 import time
 from joblib import Parallel, delayed
-from mvnormpy.autograd.multivariate_normal_cdf import multivariate_normal_cdf as CDF
+from mvnorm import multivariate_normal_cdf as CDF
 from splinetorch import Interpolant
-from mvnormpy.hyperrectangle_integral import hyperrectangle_integral
+from mvnorm.hyperrectangle_integral import hyperrectangle_integral
 
 sqrt2M1 = 0.70710678118654746171500846685
 
