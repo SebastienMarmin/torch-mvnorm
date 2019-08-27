@@ -56,11 +56,12 @@ if __name__ == "__main__":
 
 
     d = 4
-    bd = [1,1]
+    bd = [1,2]
     x = torch.zeros(*bd,d)
     x.requires_grad = True
     A = torch.randn(*bd,d,d)
-    C = .0001*(torch.matmul(A,A.transpose(-2,-1))+1000*torch.diag_embed(torch.ones(*bd,d),dim1=-1,dim2=-2))
+    C = (torch.matmul(A,A.transpose(-2,-1))+1*torch.diag_embed(torch.ones(*bd,d),dim1=-1,dim2=-2))
+    C.requires_grad = True
     maxpts = 250000
     abseps = 0.000001
     releps = 0
@@ -69,7 +70,8 @@ if __name__ == "__main__":
     print(p)
     indi = (0,0)
     print("ANALYTICAL: d(CDF(X))/dx_"+str(indi[0])+str(indi[1])+" = ")
-    print(grad(p[indi],(x),create_graph=False)[0])
+    G = grad(p[indi],(x,C),create_graph=False)
+    print(G[0])
     print("NUMERICAL:  d(CDF(X_"+str(indi[0])+str(indi[1])+"))/dx_"+str(indi[0])+str(indi[1])+" = ")
     print(dPdx_num(x[indi[0],indi[1],:],C[indi[0],indi[1],...],maxpts=maxpts,abseps=abseps))
 
@@ -78,3 +80,4 @@ if __name__ == "__main__":
     #print(2*dPdC_num(x,C ,maxpts=maxpts,abseps=abseps))
     print(d2Pdx2_num(x[indi[0],indi[1],:],C[indi[0],indi[1],...],maxpts=maxpts,abseps=abseps))
     print(2*dPdC_num(x[indi[0],indi[1],:],C[indi[0],indi[1],...] ,maxpts=maxpts,abseps=abseps))
+    print(G[1])
