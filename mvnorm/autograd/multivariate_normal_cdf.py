@@ -58,7 +58,24 @@ def _parallel_CDF(x,correlation,maxpts,abseps,releps):
     return tensor(tuple(p),dtype = x.dtype,device = x.device).view(batch_shape)
 
 class MultivariateNormalCDF(Function):
+    """
+    Array with associated photographic information.
 
+    ...
+
+    Attributes
+    ----------
+    exposure : float
+        Exposure in seconds.
+
+    Methods
+    -------
+    colorspace(c='rgb')
+        Represent the photo in the given colorspace.
+    gamma(n=1.0)
+        Change the photo's gamma exposure.
+
+    """
     @staticmethod
     def forward(ctx, x,c,m,maxpts,abseps,releps):
         # input infos
@@ -101,6 +118,20 @@ class MultivariateNormalCDF(Function):
 CDFapp = MultivariateNormalCDF.apply
 
 def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
+    """Gets and prints the spreadsheet's header columns
+
+    Parameters
+    ----------
+    file_loc : str
+        The file location of the spreadsheet
+    print_cols : bool, optional
+        A flag used to print the columns to the console (default is False)
+
+    Returns
+    -------
+    list
+        a list of strings representing the header columns
+    """
     if (covariance_matrix is not None) + (scale_tril is not None) != 1:
         raise ValueError("Exactly one of sigma or scale_tril may be specified.")
     mat  = scale_tril if covariance_matrix is None else covariance_matrix
