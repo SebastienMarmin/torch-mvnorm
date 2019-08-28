@@ -4,8 +4,8 @@ from operator import mul
 from itertools import zip_longest
 
 from mvnorm import genz_bretz
-from numpy import array, zeros as np_zeros, int32, tril_indices, float64,broadcast, broadcast_to,Inf,empty as np_empty,full
-from torch import tensor, int32 as torch_int32
+from numpy import array, zeros as np_zeros, int32, tril_indices, float64,broadcast, broadcast_to,Inf,empty as np_empty,full, ascontiguousarray
+from torch import tensor, int32 as torch_int32, erfc, ones as torch_ones
 
 
 N_JOBS = 1
@@ -27,13 +27,16 @@ def _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=False):
         p = Parallel(n_jobs=N_JOBS,prefer="threads")(
             delayed(genz_bretz)(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,infint) for j in range(N))
     else:
-        p = (genz_bretz(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,infint) for j in range(N))
+        p = tuple(genz_bretz(d, l[j,:], u[j,:], i[j,:], c[j,:], maxpts,abseps,releps,infint) for j in range(N))
     if info:
-        return zip(*tuple(p)) # i.e. values, errors, infos
+        return zip(*p) # i.e. values, errors, infos
     else:
-        return tuple(p) #
+        return p #
 
 
+sqrt2M1 = 0.70710678118654746171500846685
+def Phi(z):
+    return erfc(-z*sqrt2M1)/2
 
 def _hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps,info=False):
     # main differences with _parallel_CDF is that it handles complex lower/upper bounds
@@ -49,13 +52,15 @@ def _hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps,inf
     # broadcast lower and upper to get pre_batch_shape
     elif not lnone and not unone:
         pre_batch_shape = broadcast(lower,upper).shape[:-1]
+        cdf = False
     else: # case were we compute P(Y<x): lower is [-inf, ..., -inf] and upper = x.
           # Invert lower and upper if it is upper=None
         cdf = True
         if unone:
             upper = -lower
         pre_batch_shape = upper.shape[:-1]
-    cor = correlation.numpy()[...,trind[0],trind[1]].astype(float64)
+    cor = ascontiguousarray(correlation.numpy()[...,trind[0],trind[1]],dtype=float64)
+
     # broadcast all lower, upper, correlation
     batch_shape = broadcast_shape(pre_batch_shape,cor.shape[:-1])
     dtype  = correlation.dtype
@@ -68,6 +73,14 @@ def _hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps,inf
         else:
             return torch_ones(*batch_shape,dtype = dtype,device = device)
     else:
+        if d==1:
+            val = Phi(upper.squeeze(-1)) if cdf else  Phi(upper.squeeze(-1)) - Phi(lower.squeeze(-1))
+            if info:
+                return (val,
+                    torch_zeros(*batch_shape,dtype = dtype,device = device),
+                    torch_zeros(*batch_shape, dtype = torch_int32,device = device))
+            else:
+                return val
         dd = d*(d-1)//2 # size of flatten correlation matrix
         # Broadcast:
         c = broadcast_to(cor,batch_shape+[dd]).reshape(-1,dd)
@@ -77,7 +90,7 @@ def _hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps,inf
         u = broadcast_to(upp,shape1).reshape(N,d)
         infu = u==Inf
         if cdf:
-            l = np_empty((N,d),dtpye=float64) # never used but required by Fortran code
+            l = np_empty((N,d),dtype=float64) # never used but required by Fortran code
             i = np_zeros((N,d),dtype=int32)
             i.setflags(write=1)
             i[infu] = -1 # basically ignores these componenents

@@ -1506,13 +1506,6 @@ typedef struct {
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 
-/* Print.proto */
-static int __Pyx_Print(PyObject*, PyObject *, int);
-#if CYTHON_COMPILING_IN_PYPY || PY_MAJOR_VERSION >= 3
-static PyObject* __pyx_print = 0;
-static PyObject* __pyx_print_kwargs = 0;
-#endif
-
 /* RealImag.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1617,9 +1610,6 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES v
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
-/* PrintOne.proto */
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o);
-
 /* CIntToPy.proto */
 static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
 
@@ -1690,8 +1680,6 @@ static PyObject *__pyx_builtin_ImportError;
 static const char __pyx_k_d[] = "d";
 static const char __pyx_k_f[] = "f";
 static const char __pyx_k_dd[] = "dd";
-static const char __pyx_k_end[] = "end";
-static const char __pyx_k_file[] = "file";
 static const char __pyx_k_info[] = "info";
 static const char __pyx_k_main[] = "__main__";
 static const char __pyx_k_name[] = "__name__";
@@ -1704,7 +1692,6 @@ static const char __pyx_k_infin[] = "infin";
 static const char __pyx_k_int32[] = "int32";
 static const char __pyx_k_lower[] = "lower";
 static const char __pyx_k_numpy[] = "numpy";
-static const char __pyx_k_print[] = "print";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_upper[] = "upper";
 static const char __pyx_k_value[] = "value";
@@ -1742,11 +1729,9 @@ static PyObject *__pyx_n_s_d;
 static PyObject *__pyx_n_s_dd;
 static PyObject *__pyx_n_s_delta;
 static PyObject *__pyx_n_s_empty;
-static PyObject *__pyx_n_s_end;
 static PyObject *__pyx_n_s_error;
 static PyObject *__pyx_kp_s_external_source_pygfunc_pyx;
 static PyObject *__pyx_n_s_f;
-static PyObject *__pyx_n_s_file;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_infin;
 static PyObject *__pyx_n_s_info;
@@ -1762,7 +1747,6 @@ static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_kp_s_numpy_core_multiarray_failed_to;
 static PyObject *__pyx_kp_s_numpy_core_umath_failed_to_impor;
 static PyObject *__pyx_n_s_ones;
-static PyObject *__pyx_n_s_print;
 static PyObject *__pyx_n_s_pygfunc;
 static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_releps;
@@ -2079,22 +2063,13 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
  *         double value  = 42
  *         int inform = 4             # <<<<<<<<<<<<<<
  * 
- *     print(lower)
+ *     with nogil:
  */
   __pyx_v_inform = 4;
 
   /* "pygfunc.pyx":18
  *         int inform = 4
  * 
- *     print(lower)             # <<<<<<<<<<<<<<
- *     with nogil:
- *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
- */
-  if (__Pyx_PrintOne(0, ((PyObject *)__pyx_v_lower)) < 0) __PYX_ERR(0, 18, __pyx_L1_error)
-
-  /* "pygfunc.pyx":19
- * 
- *     print(lower)
  *     with nogil:             # <<<<<<<<<<<<<<
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
  *     if info==1:
@@ -2107,8 +2082,8 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
       #endif
       /*try:*/ {
 
-        /* "pygfunc.pyx":20
- *     print(lower)
+        /* "pygfunc.pyx":19
+ * 
  *     with nogil:
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)             # <<<<<<<<<<<<<<
  *     if info==1:
@@ -2117,9 +2092,9 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
         c_gfunc((&__pyx_v_d), (&__pyx_v_dd), ((double *)__pyx_v_lower->data), ((double *)__pyx_v_upper->data), ((int *)__pyx_v_infin->data), ((double *)__pyx_v_correl->data), ((double *)__pyx_v_delta->data), (&__pyx_v_maxpts), (&__pyx_v_abseps), (&__pyx_v_releps), (&__pyx_v_error), (&__pyx_v_value), (&__pyx_v_inform));
       }
 
-      /* "pygfunc.pyx":19
+      /* "pygfunc.pyx":18
+ *         int inform = 4
  * 
- *     print(lower)
  *     with nogil:             # <<<<<<<<<<<<<<
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
  *     if info==1:
@@ -2136,7 +2111,7 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
       }
   }
 
-  /* "pygfunc.pyx":21
+  /* "pygfunc.pyx":20
  *     with nogil:
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
  *     if info==1:             # <<<<<<<<<<<<<<
@@ -2146,7 +2121,7 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
   __pyx_t_6 = ((__pyx_v_info == 1) != 0);
   if (__pyx_t_6) {
 
-    /* "pygfunc.pyx":22
+    /* "pygfunc.pyx":21
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
  *     if info==1:
  *         return value, error, inform             # <<<<<<<<<<<<<<
@@ -2154,13 +2129,13 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
  *         return value
  */
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_1 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_1);
-    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_error); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_2 = PyFloat_FromDouble(__pyx_v_error); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_inform); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyInt_From_int(__pyx_v_inform); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 22, __pyx_L1_error)
+    __pyx_t_4 = PyTuple_New(3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 21, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __Pyx_GIVEREF(__pyx_t_1);
     PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1);
@@ -2175,7 +2150,7 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
     __pyx_t_4 = 0;
     goto __pyx_L0;
 
-    /* "pygfunc.pyx":21
+    /* "pygfunc.pyx":20
  *     with nogil:
  *         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
  *     if info==1:             # <<<<<<<<<<<<<<
@@ -2184,7 +2159,7 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
  */
   }
 
-  /* "pygfunc.pyx":24
+  /* "pygfunc.pyx":23
  *         return value, error, inform
  *     else:
  *         return value             # <<<<<<<<<<<<<<
@@ -2193,7 +2168,7 @@ static PyObject *__pyx_pf_7pygfunc_f(CYTHON_UNUSED PyObject *__pyx_self, int __p
  */
   /*else*/ {
     __Pyx_XDECREF(__pyx_r);
-    __pyx_t_4 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 24, __pyx_L1_error)
+    __pyx_t_4 = PyFloat_FromDouble(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 23, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
     __pyx_r = __pyx_t_4;
     __pyx_t_4 = 0;
@@ -4717,11 +4692,9 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_dd, __pyx_k_dd, sizeof(__pyx_k_dd), 0, 0, 1, 1},
   {&__pyx_n_s_delta, __pyx_k_delta, sizeof(__pyx_k_delta), 0, 0, 1, 1},
   {&__pyx_n_s_empty, __pyx_k_empty, sizeof(__pyx_k_empty), 0, 0, 1, 1},
-  {&__pyx_n_s_end, __pyx_k_end, sizeof(__pyx_k_end), 0, 0, 1, 1},
   {&__pyx_n_s_error, __pyx_k_error, sizeof(__pyx_k_error), 0, 0, 1, 1},
   {&__pyx_kp_s_external_source_pygfunc_pyx, __pyx_k_external_source_pygfunc_pyx, sizeof(__pyx_k_external_source_pygfunc_pyx), 0, 0, 1, 0},
   {&__pyx_n_s_f, __pyx_k_f, sizeof(__pyx_k_f), 0, 0, 1, 1},
-  {&__pyx_n_s_file, __pyx_k_file, sizeof(__pyx_k_file), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_infin, __pyx_k_infin, sizeof(__pyx_k_infin), 0, 0, 1, 1},
   {&__pyx_n_s_info, __pyx_k_info, sizeof(__pyx_k_info), 0, 0, 1, 1},
@@ -4737,7 +4710,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_s_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 0, 1, 0},
   {&__pyx_kp_s_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 0, 1, 0},
   {&__pyx_n_s_ones, __pyx_k_ones, sizeof(__pyx_k_ones), 0, 0, 1, 1},
-  {&__pyx_n_s_print, __pyx_k_print, sizeof(__pyx_k_print), 0, 0, 1, 1},
   {&__pyx_n_s_pygfunc, __pyx_k_pygfunc, sizeof(__pyx_k_pygfunc), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_releps, __pyx_k_releps, sizeof(__pyx_k_releps), 0, 0, 1, 1},
@@ -7154,112 +7126,6 @@ static void __Pyx_ReleaseBuffer(Py_buffer *view) {
     }
 }
 
-/* Print */
-  #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static PyObject *__Pyx_GetStdout(void) {
-    PyObject *f = PySys_GetObject((char *)"stdout");
-    if (!f) {
-        PyErr_SetString(PyExc_RuntimeError, "lost sys.stdout");
-    }
-    return f;
-}
-static int __Pyx_Print(PyObject* f, PyObject *arg_tuple, int newline) {
-    int i;
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    for (i=0; i < PyTuple_GET_SIZE(arg_tuple); i++) {
-        PyObject* v;
-        if (PyFile_SoftSpace(f, 1)) {
-            if (PyFile_WriteString(" ", f) < 0)
-                goto error;
-        }
-        v = PyTuple_GET_ITEM(arg_tuple, i);
-        if (PyFile_WriteObject(v, f, Py_PRINT_RAW) < 0)
-            goto error;
-        if (PyString_Check(v)) {
-            char *s = PyString_AsString(v);
-            Py_ssize_t len = PyString_Size(v);
-            if (len > 0) {
-                switch (s[len-1]) {
-                    case ' ': break;
-                    case '\f': case '\r': case '\n': case '\t': case '\v':
-                        PyFile_SoftSpace(f, 0);
-                        break;
-                    default:  break;
-                }
-            }
-        }
-    }
-    if (newline) {
-        if (PyFile_WriteString("\n", f) < 0)
-            goto error;
-        PyFile_SoftSpace(f, 0);
-    }
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-}
-#else
-static int __Pyx_Print(PyObject* stream, PyObject *arg_tuple, int newline) {
-    PyObject* kwargs = 0;
-    PyObject* result = 0;
-    PyObject* end_string;
-    if (unlikely(!__pyx_print)) {
-        __pyx_print = PyObject_GetAttr(__pyx_b, __pyx_n_s_print);
-        if (!__pyx_print)
-            return -1;
-    }
-    if (stream) {
-        kwargs = PyDict_New();
-        if (unlikely(!kwargs))
-            return -1;
-        if (unlikely(PyDict_SetItem(kwargs, __pyx_n_s_file, stream) < 0))
-            goto bad;
-        if (!newline) {
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                goto bad;
-            if (PyDict_SetItem(kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                goto bad;
-            }
-            Py_DECREF(end_string);
-        }
-    } else if (!newline) {
-        if (unlikely(!__pyx_print_kwargs)) {
-            __pyx_print_kwargs = PyDict_New();
-            if (unlikely(!__pyx_print_kwargs))
-                return -1;
-            end_string = PyUnicode_FromStringAndSize(" ", 1);
-            if (unlikely(!end_string))
-                return -1;
-            if (PyDict_SetItem(__pyx_print_kwargs, __pyx_n_s_end, end_string) < 0) {
-                Py_DECREF(end_string);
-                return -1;
-            }
-            Py_DECREF(end_string);
-        }
-        kwargs = __pyx_print_kwargs;
-    }
-    result = PyObject_Call(__pyx_print, arg_tuple, kwargs);
-    if (unlikely(kwargs) && (kwargs != __pyx_print_kwargs))
-        Py_DECREF(kwargs);
-    if (!result)
-        return -1;
-    Py_DECREF(result);
-    return 0;
-bad:
-    if (kwargs != __pyx_print_kwargs)
-        Py_XDECREF(kwargs);
-    return -1;
-}
-#endif
-
 /* Declarations */
   #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -7789,43 +7655,6 @@ raise_neg_overflow:
         "can't convert negative value to int");
     return (int) -1;
 }
-
-/* PrintOne */
-  #if !CYTHON_COMPILING_IN_PYPY && PY_MAJOR_VERSION < 3
-static int __Pyx_PrintOne(PyObject* f, PyObject *o) {
-    if (!f) {
-        if (!(f = __Pyx_GetStdout()))
-            return -1;
-    }
-    Py_INCREF(f);
-    if (PyFile_SoftSpace(f, 0)) {
-        if (PyFile_WriteString(" ", f) < 0)
-            goto error;
-    }
-    if (PyFile_WriteObject(o, f, Py_PRINT_RAW) < 0)
-        goto error;
-    if (PyFile_WriteString("\n", f) < 0)
-        goto error;
-    Py_DECREF(f);
-    return 0;
-error:
-    Py_DECREF(f);
-    return -1;
-    /* the line below is just to avoid C compiler
-     * warnings about unused functions */
-    return __Pyx_Print(f, NULL, 0);
-}
-#else
-static int __Pyx_PrintOne(PyObject* stream, PyObject *o) {
-    int res;
-    PyObject* arg_tuple = PyTuple_Pack(1, o);
-    if (unlikely(!arg_tuple))
-        return -1;
-    res = __Pyx_Print(stream, arg_tuple, 1);
-    Py_DECREF(arg_tuple);
-    return res;
-}
-#endif
 
 /* CIntToPy */
   static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
