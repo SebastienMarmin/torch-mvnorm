@@ -40,13 +40,11 @@ class MultivariateNormalCDF(Function):
 
     """
     @staticmethod
-    def forward(ctx, x,c,m,maxpts,abseps,releps):
+    def forward(ctx, val,c,maxpts,abseps,releps):
         # input infos
         ctx.maxpts   = maxpts
         ctx.abseps   = abseps
         ctx.releps   = releps
-        ctx.m_is_None = m is None
-        val = x if ctx.m_is_None else x-m
         ctx.save_for_backward(val,c) # m.data is not needed for gradient computation
         stds = diagonal(c,dim1=-2,dim2=-1).sqrt()
         ctx.stds = stds
@@ -56,11 +54,10 @@ class MultivariateNormalCDF(Function):
 
     @staticmethod
     def backward(ctx, grad_output):
-        m_is_None = ctx.m_is_None
         val,c = ctx.saved_tensors
         d = val.size(-1)
-        grad_x = grad_c = grad_m = None
-        need_x, need_c, need_m = ctx.needs_input_grad[:3]
+        grad_x = grad_c = None
+        need_x, need_c = ctx.needs_input_grad[:2]
         p = phi(val,ctx.stds)
         m_cond,c_c_l = one_component_conditioning(c,m = val, var = ctx.stds**2,cov2cor=True)
         m_c_l = unbind(m_cond,-2)
@@ -69,12 +66,10 @@ class MultivariateNormalCDF(Function):
         res = grad_output.unsqueeze(-1)*P*p
         if need_x:
             grad_x = res
-        if need_m:
-            grad_m = -res
         if need_c:
             raise NotImplementedError("Deriv w.r.t. cov is not implemented yet.")
         #if bias is not None and ctx.needs_input_grad[2]:
-        return grad_x, grad_c, grad_m, None, None, None
+        return grad_x, grad_c, None, None, None
        
 
 CDFapp = MultivariateNormalCDF.apply
@@ -111,10 +106,11 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
     if not unone and upper.min()== Inf:
         upper=None
         unone = True
-    if loc is None:
-        loc = torch_zeros(d,device=device,dtype=dtype)
+
 
     if method=="MonteCarlo": # Monte Carlo estimation
+        if loc is None:
+            loc = torch_zeros(d,device=device,dtype=dtype)
         info  = -1 # for consistancy with GenzBretz
         p = MultivariateNormal(loc=loc,scale_tril=scale_tril,covariance_matrix=covariance_matrix)
         r = nmc%5
@@ -138,32 +134,30 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
                 value = Z.mean(-1)
                 error = -1
     elif method == "GenzBretz": # Fortran routine
-        if d!=x.size(-1):
-            raise ValueError("The covariance matrix does not have the same number of dimensions (" +str(d)+ ") as 'x' ("+str(x.size(-1))+").")
         if (d > 1000):
             raise ValueError("Only dimensions below 1000 are allowed. Got "+str(d)+".")
-
+        if loc is not None: # centralize the problem
+            uppe = None if unone else upper - loc
+            lowe = None if lnone else lower - loc
         c = matmul(scale_tril,scale_tril.transose(-1,-2)) if covariance_matrix is None else covariance_matrix
-
         if error_info:
-            if x.requires_grad or loc.requires_grad or mat.requires_grad:
+            if (not unone and uppe.requires_grad) or (not lnone and lowe.requires_grad) or mat.requires_grad:
                 raise ValueError("Option 'error_info' is True, and one of x, loc, covariance_matrix or scale_tril requires gradient. With option 'GenzBretz', the estimation of CDF error is not compatible with autograd.")
             stds = diagonal(c,dim1=-2,dim2=-1).sqrt()
-            lowe,uppe, corr = _cov2cor(lower,upper,c,stds)
-            value, error, info = _hyperrectangle_integration(lowe,uppe,corr,maxpts,abseps,releps,info=True)
+            low,upp, corr = _cov2cor(lowe,uppe,c,stds)
+            value, error, info = _hyperrectangle_integration(low,upp,corr,maxpts,abseps,releps,info=True)
         else:
             error = -1
             info = -1
             if lnone and unone:
                 raise ValueError("For autograd with option 'GenzBretz', at least lower or upper must have one finite component.") # TODO deal with this assigning zero grad for the covariance
             elif lnone:
-                pass
+                upp = uppe
             elif unone:
-                upper = -lower
-                loc = -loc
+                upp = -lowe
             else:
                 raise ValueError("For autograd with option 'GenzBretz', at least lower or upper should be None (or with all components inifinite).")
-            value =  CDFapp(upper,c,loc,maxpts,abseps,releps)
+            value =  CDFapp(upp,c,maxpts,abseps,releps)
 
     else:
         raise ValueError("The 'method=' should be either 'GenzBretz' or 'MonteCarlo'.")
