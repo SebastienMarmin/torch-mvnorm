@@ -2,12 +2,12 @@
 import sys
 sys.path.append(".") 
 #sys.path.append("./..") # if this script runs in test folder
-from mvnorm.parallel.joblib import _parallel_CDF,_parallel_hyperrectangle_integration
+from mvnorm.parallel.joblib import _hyperrectangle_integration
 import torch
 import numpy as np
 
 
-bs = [2,3]
+bs = []
 d = 3
 val = d*(3+torch.randn(*bs,d))
 A = torch.randn(*bs,d,d)
@@ -26,7 +26,17 @@ l[...,-1] -= np.Inf #
 
 u_rs = u/stds
 l_rs = l/stds
-
-print(_parallel_hyperrectangle_integration(l_rs,u_rs,c,maxpts,abseps,releps))
+print("l")
+print(l_rs)
+print("u")
+print(u_rs)
+print(_hyperrectangle_integration(l_rs,u_rs,c,maxpts,abseps,releps))
+l2 = l_rs
+l2[2] = -1
+print("l")
+print(l2)
+print("u")
+print(u_rs)
+print(_parallel_hyperrectangle_integration(l2,u_rs,c,maxpts,abseps,releps))
 
 

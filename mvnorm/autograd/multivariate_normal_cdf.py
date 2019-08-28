@@ -1,25 +1,23 @@
 
 from .conditioning import one_component_conditioning
 
-from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros
+from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros, new_full
 from torch.autograd import Function
-
-from ..parallel.joblib import _parallel_CDF
-from mvnorm.hyperrectangle_integral import hyperrectangle_integral
-
+from numpy import Inf
+from ..parallel.joblib import _hyperrectangle_integration
 
 
-
-
-# Default computation-budget parameters that can be changed by the user (see TODO).
-MAXPTS = 25000
-ABSEPS = 0.001
-RELEPS = 0
 
 
 def phi(z,s):
     return 0.39894228040143270286321808271/s*(-z**2/(2*s**2)).exp()
 #                 ^ oneOverSqrt2pi     
+
+def _cov2cor(a,b,mat,stds):
+    a_r = None if a is None else a/stds
+    b_r = None if b is None else b/stds
+    mat_r   = ((mat/stds.unsqueeze(-1))/stds.unsqueeze(-2))
+    return a_r, b_r, mat_r
 
 
 class MultivariateNormalCDF(Function):
@@ -52,9 +50,8 @@ class MultivariateNormalCDF(Function):
         ctx.save_for_backward(val,c) # m.data is not needed for gradient computation
         stds = diagonal(c,dim1=-2,dim2=-1).sqrt()
         ctx.stds = stds
-        val_rescaled = (val/ctx.stds)
-        corr = ((c/stds.unsqueeze(-1))/stds.unsqueeze(-2))
-        out = _parallel_CDF(val_rescaled,corr,maxpts,abseps,releps)
+        val_rescaled,_, corr = _cov2cor(val,None,c,stds)
+        out = _hyperrectangle_integration(None,val_rescaled,corr,maxpts,abseps,releps,False)
         return out 
 
     @staticmethod
@@ -67,7 +64,7 @@ class MultivariateNormalCDF(Function):
         p = phi(val,ctx.stds)
         m_cond,c_c_l = one_component_conditioning(c,m = val, var = ctx.stds**2,cov2cor=True)
         m_c_l = unbind(m_cond,-2)
-        P_l= (_parallel_CDF(m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps).unsqueeze(-1) for i in range(d))
+        P_l= (_hyperrectangle_integration(None,m_c_l[i],c_c_l[i],ctx.maxpts,ctx.abseps,ctx.releps,False).unsqueeze(-1) for i in range(d)) # TODO
         P = cat(tuple(P_l),-1)
         res = grad_output.unsqueeze(-1)*P*p
         if need_x:
@@ -82,7 +79,7 @@ class MultivariateNormalCDF(Function):
 
 CDFapp = MultivariateNormalCDF.apply
 
-def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
+def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
     """Gets and prints the spreadsheet's header columns
 
     Parameters
@@ -100,51 +97,78 @@ def multivariate_normal_cdf(x,loc=None,covariance_matrix=None,scale_tril=None,me
     if (covariance_matrix is not None) + (scale_tril is not None) != 1:
         raise ValueError("Exactly one of sigma or scale_tril may be specified.")
     mat  = scale_tril if covariance_matrix is None else covariance_matrix
-    device, dtype = mat.device, mat.dtype   
-    d = mat.size(-1)     
+    device, dtype = mat.device, mat.dtype
+    d = mat.size(-1)  
+    if isinstance(lower,(int,float)):
+        lower = new_full((d,), float(lower), dtype=dtype, device=device)
+    if isinstance(upper,(int,float)):
+        upper = new_full((d,), float(upper), dtype=dtype, device=device)
+    lnone = lower==None
+    unone = upper==None
+    if not lnone and lower.max()==-Inf:
+        lower=None
+        lnone = True
+    if not unone and upper.min()== Inf:
+        upper=None
+        unone = True
     if loc is None:
         loc = torch_zeros(d,device=device,dtype=dtype)
-    if isinstance(x,(int,float)):
-        x = Tensor([float(upper)],device=device).type(dtype)
+
     if method=="MonteCarlo": # Monte Carlo estimation
+        info  = -1 # for consistancy with GenzBretz
         p = MultivariateNormal(loc=loc,scale_tril=scale_tril,covariance_matrix=covariance_matrix)
         r = nmc%5
         N = nmc if r==0 else nmc + 5 - r # rounded to the upper multiple of 5
-        Z = (p.sample(torch.Size([N]))<x).prod(-1)
-        if error_info: # Does NOT slow down significatively
-            booleans = Z.view(*Z.shape[:-1],5,N//5) # divide in 5 groups to have an idea of the precision 
-            values   = ((booleans.sum(-1).type(torch.float)))/N*5
-            value = values.mean(-1).item()
-            std = values.var(-1).sqrt().item()
-            error = 1.96 * std / sqrt(5) # at 95 %
+        Y = p.sample(torch.Size([N]))
+        if lnone and unone:
+            error = torch_zeros(Y.shape[:-2],device=device,dtype=dtype) if error_info else -1
+            value = torch_ones(Y.shape[:-2],device=device,dtype=dtype)
         else:
-            value = Z.mean(-1).item()
-            error = -1
+            if lnone:
+                Z = (Y<upper).prod(-1)
+            else:
+                Z = (Y>lower).prod(-1) if unone else (Y<upper).prod(-1)*(Y>lower).prod(-1)
+            if error_info: # Does NOT slow down significatively
+                booleans = Z.view(*Z.shape[:-1],5,N//5) # divide in 5 groups to have an idea of the precision 
+                values   = ((booleans.sum(-1).type(torch.float)))/N*5
+                value = values.mean(-1)
+                std = values.var(-1).sqrt()
+                error = 1.96 * std / sqrt(5) # at 95 %
+            else:
+                value = Z.mean(-1)
+                error = -1
     elif method == "GenzBretz": # Fortran routine
         if d!=x.size(-1):
             raise ValueError("The covariance matrix does not have the same number of dimensions (" +str(d)+ ") as 'x' ("+str(x.size(-1))+").")
         if (d > 1000):
             raise ValueError("Only dimensions below 1000 are allowed. Got "+str(d)+".")
-        if not error_info:
-                if maxpts is None:
-                    maxpts = MAXPTS
-                if abseps is None:
-                    abseps = ABSEPS
-                if releps is None:
-                    releps = RELEPS
-                c =  matmul(scale_tril,scale_tril.transose(-1,-2)) if covariance_matrix is None else covariance_matrix
-                value =  CDFapp(x,c,loc,maxpts,abseps,releps)
-                error = -1
-        else:
+
+        c = matmul(scale_tril,scale_tril.transose(-1,-2)) if covariance_matrix is None else covariance_matrix
+
+        if error_info:
             if x.requires_grad or loc.requires_grad or mat.requires_grad:
                 raise ValueError("Option 'error_info' is True, and one of x, loc, covariance_matrix or scale_tril requires gradient. With option 'GenzBretz', the estimation of CDF error is not compatible with autograd.")
-            if x.dim()>1 or loc.dim()>1 or mat.dim()>2:
-                raise ValueError("Option 'error_info' is True, and one of x, loc, covariance_matrix or scale_tril requires gradient have a number of dim > 1 (or > 2 for matrices). With option 'GenzBretz', the estimation of CDF error is not compatible with batch tensor shape.")
-            value, error, info = hyperrectangle_integral(upper = x, mean = loc, sigma = covariance_matrix,scale_tril=scale_tril, maxpts = maxpts, abseps = abseps, releps = releps)
+            stds = diagonal(c,dim1=-2,dim2=-1).sqrt()
+            lowe,uppe, corr = _cov2cor(lower,upper,c,stds)
+            value, error, info = _hyperrectangle_integration(lowe,uppe,corr,maxpts,abseps,releps,info=True)
+        else:
+            error = -1
+            info = -1
+            if lnone and unone:
+                raise ValueError("For autograd with option 'GenzBretz', at least lower or upper must have one finite component.") # TODO deal with this assigning zero grad for the covariance
+            elif lnone:
+                pass
+            elif unone:
+                upper = -lower
+                loc = -loc
+            else:
+                raise ValueError("For autograd with option 'GenzBretz', at least lower or upper should be None (or with all components inifinite).")
+            value =  CDFapp(upper,c,loc,maxpts,abseps,releps)
+
     else:
         raise ValueError("The 'method=' should be either 'GenzBretz' or 'MonteCarlo'.")
-    if error_info and error > abseps:
-            warn("Estimated error is higher than abseps. Consider raising the computation budget (nmc for method='MonteCarlo' or maxpts for 'GenzBretz'). Switch 'error_info' to False to ignore.")
-    return value, error
 
-# TODO hyperrectangle function similar with info. Remove info from cdf
+    #if error_info and error > abseps:
+    #        warn("Estimated error is higher than abseps. Consider raising the computation budget (nmc for method='MonteCarlo' or maxpts for 'GenzBretz'). Switch 'error_info' to False to ignore.")
+    return value, error, info
+

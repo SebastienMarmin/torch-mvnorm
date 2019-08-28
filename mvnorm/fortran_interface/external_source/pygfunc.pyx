@@ -14,7 +14,7 @@ def f(int d,ar[double] lower, ar[double] upper, ar[int] infin,ar[double] correl,
         double error  = 42
         double value  = 42
         int inform = 4
-        
+    
     with nogil:
         c_gfunc(&d,&dd, <double*> lower.data, <double*> upper.data, <int*> infin.data, <double*> correl.data, <double*> delta.data,&maxpts, &abseps, &releps,&error,&value,&inform)
     if info==1:

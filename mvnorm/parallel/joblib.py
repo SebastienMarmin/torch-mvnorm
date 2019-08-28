@@ -4,8 +4,8 @@ from operator import mul
 from itertools import zip_longest
 
 from mvnorm import genz_bretz
-from numpy import array, zeros as np_zeros, int32, tril_indices, float64,broadcast, broadcast_to,Inf
-from torch import tensor, int32 as torch_int32, float32 as torch_float32
+from numpy import array, zeros as np_zeros, int32, tril_indices, float64,broadcast, broadcast_to,Inf,empty as np_empty,full
+from torch import tensor, int32 as torch_int32
 
 
 N_JOBS = 1
@@ -35,6 +35,91 @@ def _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=False):
 
 
 
+def _hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps,info=False):
+    # main differences with _parallel_CDF is that it handles complex lower/upper bounds
+    # with infinite components and it returns information on the completion.
+    d = correlation.size(-1)
+    trind = tril_indices(d,-1)
+    ### Infere batch_shape
+    lnone = lower is None
+    unone = upper is None
+    bothNone = lnone and unone
+    if bothNone:
+        pre_batch_shape = []
+    # broadcast lower and upper to get pre_batch_shape
+    elif not lnone and not unone:
+        pre_batch_shape = broadcast(lower,upper).shape[:-1]
+    else: # case were we compute P(Y<x): lower is [-inf, ..., -inf] and upper = x.
+          # Invert lower and upper if it is upper=None
+        cdf = True
+        if unone:
+            upper = -lower
+        pre_batch_shape = upper.shape[:-1]
+    cor = correlation.numpy()[...,trind[0],trind[1]].astype(float64)
+    # broadcast all lower, upper, correlation
+    batch_shape = broadcast_shape(pre_batch_shape,cor.shape[:-1])
+    dtype  = correlation.dtype
+    device = correlation.device
+    if bothNone: # trivial case
+        if info:
+            return (torch_ones(*batch_shape,dtype = dtype,device = device),
+                    torch_zeros(*batch_shape,dtype = dtype,device = device),
+                    torch_zeros(*batch_shape, dtype = torch_int32,device = device))
+        else:
+            return torch_ones(*batch_shape,dtype = dtype,device = device)
+    else:
+        dd = d*(d-1)//2 # size of flatten correlation matrix
+        # Broadcast:
+        c = broadcast_to(cor,batch_shape+[dd]).reshape(-1,dd)
+        N = c.shape[0] # batch number
+        upp =  upper.numpy().astype(float64)
+        shape1 = batch_shape+[d]
+        u = broadcast_to(upp,shape1).reshape(N,d)
+        infu = u==Inf
+        if cdf:
+            l = np_empty((N,d),dtpye=float64) # never used but required by Fortran code
+            i = np_zeros((N,d),dtype=int32)
+            i.setflags(write=1)
+            i[infu] = -1 # basically ignores these componenents
+        else:
+            low = lower.numpy().astype(float64)
+            l = broadcast_to(low,shape1).reshape(N,d)
+            i = full((N, d), 2,dtype=int32)
+            infl = l==-Inf
+            i.setflags(write=1)
+            i[infl] = 0
+            i[infu] = 1
+            i[infl*infu] = -1 # basically ignores these componenents
+        
+        # infin is a int vector to pass to the fortran code controlling the integral limits
+        #            if INFIN(I) < 0, Ith limits are (-infinity, infinity);
+        #            if INFIN(I) = 0, Ith limits are (-infinity, UPPER(I)];
+        #            if INFIN(I) = 1, Ith limits are [LOWER(I), infinity);
+        #            if INFIN(I) = 2, Ith limits are [LOWER(I), UPPER(I)].  
+            
+        # TODO better to build res and assign or build-reshap?
+        res = _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info)
+    if info :
+        values, errors, infos = res
+        return (tensor(values,dtype = dtype,device = device).view(batch_shape),
+                tensor(errors,dtype = dtype,device = device).view(batch_shape),
+                tensor(infos, dtype = torch_int32,device = device).view(batch_shape))
+    else:
+        return tensor(res,dtype = dtype,device = device).view(batch_shape)
+
+
+    """     l.setflags(write=1)
+    l[infl] = 0
+    u.setflags(write=1)
+    u[infu] = 0 
+
+    # now that this info is stored, we get rid of the numpy.Inf's
+    #  (they are user-friendly but not understood in Fortran)
+
+    """
+
+""" 
+
 def _parallel_CDF(x,correlation,maxpts,abseps,releps):
     d = correlation.size(-1)
     ### Convert to numpy
@@ -60,50 +145,4 @@ def _parallel_CDF(x,correlation,maxpts,abseps,releps):
     res = _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=False) 
     # for `info` use _parallel_hyperrectangle_integration
     return tensor(res,dtype = x.dtype,device = x.device).view(batch_shape)
-
-def _parallel_hyperrectangle_integration(lower,upper,correlation,maxpts,abseps,releps):
-    # main differences with _parallel_CDF is that it handles complex lower/upper bounds
-    # with infinite components and it returns information on the completion.
-    d = correlation.size(-1)
-    trind = tril_indices(d,-1)
-    ### Convert to numpy
-    low = lower.numpy().astype(float64)
-    upp = upper.numpy().astype(float64)
-    cor = correlation.numpy()[...,trind[0],trind[1]].astype(float64)
-    batch_shape = broadcast(low[...,0],upp[...,0],cor[...,0]).shape
-    dd = d*(d-1)//2
-    shape1 = list(batch_shape)+[d]
-    shape2 = list(batch_shape)+[dd]
-    l = broadcast_to(low,shape1).reshape(-1,d)
-    N = l.shape[0]
-    u = broadcast_to(upp,shape1).reshape(N,d)
-    c = broadcast_to(cor,shape2).reshape(N,dd)
-    infin = array(tuple(2 for i in range(d))).astype(int32)
-    i = broadcast_to(infin,[N,d])
-    # infin is a int vector to pass to the fortran code controlling the integral limits
-    #            if INFIN(I) < 0, Ith limits are (-infinity, infinity);
-    #            if INFIN(I) = 0, Ith limits are (-infinity, UPPER(I)];
-    #            if INFIN(I) = 1, Ith limits are [LOWER(I), infinity);
-    #            if INFIN(I) = 2, Ith limits are [LOWER(I), UPPER(I)].
-    infl = l==-Inf 
-    infu = u==Inf
-    i.setflags(write=1)
-    i[infl] = 0
-    i[infu] = 1
-    i[infl*infu] = -1 # basically ignores these componenents
-    # now that this info is stored, we get rid of the numpy.Inf's
-    #  (they are user-friendly but not understood in Fortran)
-    l.setflags(write=1)
-    l[infl] = 0
-    u.setflags(write=1)
-    u[infu] = 0
-
-    # TODO better to build res and assign or build-reshap?
-    values, errors, infos = _parallel_genz_bretz(l,u,i,c,maxpts,abseps,releps,info=True)
-    # for skipping `info` use _parallel_CDF
-    dtype  = correlation.dtype
-    device = correlation.device
-    return (tensor(values,dtype = dtype,device = device).view(batch_shape),
-            tensor(errors,dtype = torch_float32,device = device).view(batch_shape),
-            tensor(infos, dtype = torch_int32,device = device).view(batch_shape))
-
+ """
