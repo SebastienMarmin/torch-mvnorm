@@ -1,3 +1,5 @@
+# Checks imports and basic functionalities.
+
 import sys
 sys.path.append(".")
 
@@ -12,10 +14,10 @@ A = randn(n,n)
 C = matmul(A,A.t())
 
 print("For Y~N(0,C), P(Y<x)=")
-p = P(x,covariance_matrix=C)[0]
+p = P(x,covariance_matrix=C)
 print(p)
 print("dP(Y<x)/dx = ")
-print(grad(p,(x,))[0])
+print(grad(p,(x,)))
 
 
 

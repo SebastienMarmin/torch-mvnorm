@@ -1,20 +1,19 @@
-# A script to verify correctness
 from joblib import Parallel, delayed
-
 
 import sys
 sys.path.append(".") 
-#sys.path.append("./..") # if this script runs in test folder
+#sys.path.append("./..") 
 from mvnorm import genz_bretz
 import torch
 import numpy as np
 import time
 
-def g(i):
+def g(i): # call fortran routine
     return genz_bretz(d,irr,u_list[i],infin,c_list[i],maxpts,abseps,releps,0)
     
 
 rep = 200
+nthreads = 3
 u_list = []
 c_list = []
 d = 20
@@ -34,7 +33,8 @@ for i in range(rep):
     c_n = c.type(torch.float64).numpy()[np.tril_indices(d,-1)]
     u_list +=  [u_n]
     c_list +=  [c_n]
-print("Start...")
+print("Start integrating "+str(rep)+" CDFs in dimension "+str(d)+
+        " with "+str(nthreads)+" in parallel...")
 t = time.time()
-a = Parallel(n_jobs=3,prefer="threads")(delayed(g)(i) for i in range(rep))
-print("Time: "+str(time.time()-t)+" s.")
+a = Parallel(n_jobs=nthreads,prefer="threads")(delayed(g)(i) for i in range(rep))
+print("It took "+str(round(time.time()-t,4))+" seconds.")

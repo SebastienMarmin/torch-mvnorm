@@ -1,4 +1,6 @@
 # A script to verify correctness
+# Test different combination of inputs of
+# multivariate_normal_cdf(...)
 import sys
 sys.path.append(".") 
 #sys.path.append("./..") 
@@ -44,11 +46,11 @@ for lower in lower_list:
         for loc in m_list:
             for covariance_matrix in C_list:
                 for scale_tril in S_list:
-                    print("lower")
+                    print("lower = ",end = "")
                     print(lower)
-                    print("upper")
+                    print("upper = ",end = "")
                     print(upper)
-                    print("loc")
+                    print("loc = ",end = "")
                     print(loc)
                     try:
                         a1 = multivariate_normal_cdf(lower,upper,loc,covariance_matrix,scale_tril,"GenzBretz",nmc, maxpts, abseps, releps, error_info)
