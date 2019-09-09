@@ -12,12 +12,12 @@ if __name__ == "__main__":
     def dPdx_num(x,c, maxpts = 25000, abseps = 0.001, releps = 0):
         d = c.size(-1)
         res = torch.empty(d)
-        p,err,_ = hyperrectangle_integral(upper= x, sigma = c,maxpts = maxpts, abseps = abseps,releps=releps)
+        p = CDF(x,covariance_matrix= c,maxpts = maxpts, abseps = abseps,releps=releps)
         h = 0.005
         for i in range(d):
             xh = x.clone()
             xh[i] = xh[i]+h
-            ph,_,_ = hyperrectangle_integral(upper= xh, sigma = c,maxpts = maxpts, abseps = abseps,releps=releps)
+            ph = CDF(xh,covariance_matrix=c,maxpts = maxpts, abseps = abseps,releps=releps)
             res[i] = (ph-p)/h
         return res
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     mean = torch.zeros(*bd,d)
     mean.requires_grad = True
     x = (values-mean)
-    p = CDF(x,covariance_matrix=C,maxpts=maxpts,abseps=abseps)[0]
+    p = CDF(x,covariance_matrix=C,maxpts=maxpts,abseps=abseps)
     print(p)
     indi = (2,1)
     print("ANALYTICAL: d(CDF(X))/dx_"+str(indi[0])+str(indi[1])+" = ")

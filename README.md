@@ -1,2 +1,2 @@
 # torch-mvnorm
-Multivariate normal CDF computation for tensors with implementation of closed form derivatives.
+Multivariate normal CDF integrals for tensors and implementation of their closed-form partial derivatives within PyTorch.
