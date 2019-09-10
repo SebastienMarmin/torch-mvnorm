@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from .conditioning import one_component_conditioning, two_components_conditioning
 from numpy import array, zeros as np_zeros, int32, tril_indices, float64, broadcast_to
 from torch import tensor, diagonal, cat, unbind, ones as torch_ones, zeros as torch_zeros, ones_like, tril_indices as torch_tril_indices, triu_indices as torch_triu_indices,tril,triu,diag_embed # onely for dev
@@ -101,19 +102,112 @@ class MultivariateNormalCDF(Function):
 CDFapp = MultivariateNormalCDF.apply
 
 def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
-    """Gets and prints the spreadsheet's header columns
+    """Compute probabilities by integrating the multivariate normal density. Probability
+    values can be returned with closed-form backward derivatives.
+    
 
     Parameters
     ----------
-    file_loc : str
-        The file location of the spreadsheet
-    print_cols : bool, optional
-        A flag used to print the columns to the console (default is False)
+    lower : torch.Tensor, optional
+        Lower integration limits.  Can have batch shape. with the
+        last dimension is the dimension of the random vector.
+        Default is ``None`` which is understood as minus infinity
+        for all components. Values ``numpy.Inf`` are supported.
+    upper : torch.Tensor, optional
+        Upper integration limits. See `lower`.
+    loc : torch.Tensor, optional
+        Mean of the Gaussian vector. Default is zeros.
+    covariance_matrix : torch.Tensor, optional
+        Covariance matrix of the Gaussian vector. Must be provided if 
+        `scale_tril` is not.
+    scale_tril : torch.Tensor, optional
+        A lower triangular root of the covariance matrix of the Gaussian 
+        vector. Must be provided if `scale_tril` is not.
+    method : :obj: str, optional
+        Method deployed for the integration. Either ``'MonteCarlo'`` or
+        ``'GenzBretz'``.
+    nmc : :obj: int, optional
+        Number of Monte Carlo samples.
+    maxpts :obj: int, optional
+        Maximum number of integration points in the Fortran routine.
+    abseps :obj: float, optional
+        Absolute error tolerance.
+    releps :obj: float, optional
+        Relative error tolerance.
+    error_info :obj: bool, optional
+        Should an estimation of the integration error be returned.
+        Not compatible with autograd.
 
     Returns
     -------
-    list
-        a list of strings representing the header columns
+    value : torch.Tensor
+        The probability of the event ``lower < Y < upper``, with
+        ``Y`` a Gaussian vector defined by `loc` and `covariance_matrix`
+        (or `scale_tril`).
+        
+    error : torch.Tensor
+        The estimated error for each component of `value`. **Returned only 
+        if** `error_info` is ``True``.
+    info : torch.Tensor
+        Tensor of type ``int32`` informing on the execution for each 
+        component.
+            - If ``0``, normal completion with ``error < abseps``
+            - If ``1``, completion with ``error > abseps`` and (for 
+              ``method =  'GenzBretz'``) all maxpts evaluation budget is
+              depleted.
+            - If ``2``, N > 1000 or N < 1 (only for ``method =  'GenzBretz'``)
+            - If ``3``, `covariance_matrix` is not positive semi-definite (only for ``method = 'GenzBretz'``)
+        **Returned only if** `error_info` is ``True``.
+
+
+    Notes
+    -------
+    Parameters `lower`, `upper` and `covariance_matrix` (or `scale_tril`), as 
+    well as the returns `value`, `error` and `info` are broadcasted to their
+    common batch shape. See PyTorch' `broadcasting semantics
+    <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
+
+    If any component of ``lower - upper`` is negative, the function returns a null
+    tensor with consistent shape.
+
+    Method ``MonteCarlo`` uses Monte Carlo sampling for estimating `value`, whereas
+    ``method = 'GenzBretz'`` call a Fortran routine [1]_.
+
+    If `method` is ``MonteCarlo`` a Cholesky decomposition of the covariance matrix
+    will be performed. Else if ``GenzBretz``, only the correlation matrix is 
+    computed and passed to the Fortran routine.
+
+    The parameter `maxpts` can be used to limit the time. A suggested calibration
+    strategy is to start with 1000 times the integration dimension, and then
+    increase it if the returned `error` is too large.
+
+    Partial derivative are computed using non-trivial closed form formula.
+    See [2]_ for a derivation.
+
+    Using autograd requires that `upper` or `lower` have all its components infinite
+    (or unspecified).
+
+    References
+    ----------
+
+    .. [1] Alan Genz and Frank Bretz, "Comparison of Methods for the Computation of Multivariate 
+       t-Probabilities", Journal of Computational and Graphical Statistics 11, pp. 950-971, 2002. `Source code <http://www.math.wsu.edu/faculty/genz/software/fort77/mvtdstpack.f>`_.
+
+    .. [2] Sébastien Marmin, Clément Chevalier and David Ginsbourger, "Differentiating the multipoint Expected Improvement for optimal batch design", International Workshop on Machine learning, Optimization and big Data, Taormina, Italy, 2015. `Link <https://hal.archives-ouvertes.fr/hal-01133220v4/document>`_.
+
+
+    Examples
+    --------
+
+    >>> import torch
+    >>> n = 4
+    >>> x = 1 + torch.randn(n)
+    >>> # Make a positive semi-definite matrix
+    >>> A = torch.randn(n,n)
+    >>> C = 1/n*torch.matmul(A,A.t())
+    >>> mvnorm.multivariate_normal_cdf(upper=x,covariance_matrix=C)
+    tensor(0.1349)
+    
     """
     if (covariance_matrix is not None) + (scale_tril is not None) != 1:
         raise ValueError("Exactly one of covariance_matrix or scale_tril may be specified.")

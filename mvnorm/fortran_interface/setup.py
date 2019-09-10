@@ -18,10 +18,10 @@ except OSError:
   
 
 # compile the fortran modules without linking
-fortran_mod_comp = 'gfortran ./external_source/gfunc.f -c -o ./temp/gfunc.o -O3 -fPIC -ffixed-form'
+fortran_mod_comp = 'gfortran ./external_source/mvtdst.f -c -o ./temp/gfunc.o -O3 -fPIC -ffixed-form'
 print (fortran_mod_comp)
 system(fortran_mod_comp)
-shared_obj_comp = 'gfortran ./external_source/pygfunc.f90 -c -o ./temp/pygfunc.o -O3 -fPIC'
+shared_obj_comp = 'gfortran ./compilation/pygfunc.f90 -c -o ./temp/pygfunc.o -O3 -fPIC'
 print (shared_obj_comp)
 system(shared_obj_comp)
 
@@ -30,7 +30,7 @@ system(shared_obj_comp)
 ext_modules = [Extension(# module name:
                          'pygfunc',
                          # source file:
-                         ['./external_source/pygfunc.pyx'],
+                         ['./compilation/pygfunc.pyx'],
                          # other compile args for gcc
                          extra_compile_args=['-fPIC', '-O3'],
                          # other files to link to

@@ -55,7 +55,7 @@
 *                           decrease ERROR;
 *            if INFORM = 2, N > 1000 or N < 1.
 *            if INFORM = 3, correlation matrix not positive semi-definite.
-*
+*  
 *
 * Copyright (C) 2013, Alan Genz,  All rights reserved.               
 *
