@@ -20,6 +20,7 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 publish:
+	mv ../html/* ../
 	git pull
 	git add ..
 	git commit -m "Doc update."
