@@ -148,20 +148,26 @@
 <dl class="function">
 <dt id="mvnorm.multivariate_normal_cdf">
 <code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">multivariate_normal_cdf</code><span class="sig-paren">(</span><em class="sig-param">lower=None</em>, <em class="sig-param">upper=None</em>, <em class="sig-param">loc=None</em>, <em class="sig-param">covariance_matrix=None</em>, <em class="sig-param">scale_tril=None</em>, <em class="sig-param">method='GenzBretz'</em>, <em class="sig-param">nmc=200</em>, <em class="sig-param">maxpts=25000</em>, <em class="sig-param">abseps=0.001</em>, <em class="sig-param">releps=0</em>, <em class="sig-param">error_info=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mvnorm.multivariate_normal_cdf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute rectangle probabilities P(l_i &lt; Z_i &lt; u_i, i = 1,…,d) for a multivariate normal random vector Z. Probability values can be returned with closed-form backward derivatives.</p>
+<dd><p>Compute rectangle probabilities for a multivariate normal random vector Z  <code class="docutils literal notranslate"><span class="pre">P(l_i</span> <span class="pre">&lt;</span> <span class="pre">Z_i</span> <span class="pre">&lt;</span> <span class="pre">u_i,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1,...,d)</span></code>. Probability values can be returned with closed-form backward derivatives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>lower</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Lower integration limits.  Can have batch shape. with the
+<li><p><strong>lower</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Lower integration limits.  Can have batch shape. The
 last dimension is the dimension of the random vector.
 Default is <code class="docutils literal notranslate"><span class="pre">None</span></code> which is understood as minus infinity
-for all components. Values <code class="docutils literal notranslate"><span class="pre">numpy.Inf</span></code> are supported.</p></li>
+for all components. Values <code class="docutils literal notranslate"><span class="pre">-</span> <span class="pre">numpy.Inf</span></code> are supported, e.g.
+if only few components have an infinite boundary.</p></li>
 <li><p><strong>upper</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Upper integration limits. See <cite>lower</cite>.</p></li>
 <li><p><strong>loc</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Mean of the Gaussian vector. Default is zeros.</p></li>
 <li><p><strong>covariance_matrix</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Covariance matrix of the Gaussian vector. Must be provided if
 <cite>scale_tril</cite> is not.</p></li>
-<li><p><strong>scale_tril</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – A lower triangular root of the covariance matrix of the Gaussian
-vector. Must be provided if <cite>scale_tril</cite> is not.</p></li>
+<li><p><strong>scale_tril</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – <p>A lower triangular root of the covariance matrix of the Gaussian
+vector (e.g. a Cholesky factor). Must be provided if <cite>covariance_matrix</cite></p>
+<blockquote>
+<div><p>is not. The method <code class="docutils literal notranslate"><span class="pre">'GenzBretz'</span></code>, needs the covariance matrix and it
+will be computed from <cite>scale_tril</cite>.</p>
+</div></blockquote>
+</p></li>
 <li><p><strong>method</strong> – Method deployed for the integration. Either <code class="docutils literal notranslate"><span class="pre">'MonteCarlo'</span></code> or
 <code class="docutils literal notranslate"><span class="pre">'GenzBretz'</span></code>.</p></li>
 <li><p><strong>nmc</strong> – Number of Monte Carlo samples.</p></li>
@@ -176,7 +182,12 @@ Not compatible with autograd.</p></li>
 <dd class="field-even"><p><ul>
 <li><p><strong>value</strong> (<em>torch.Tensor</em>) – The probability of the event <code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">&lt;</span> <span class="pre">Y</span> <span class="pre">&lt;</span> <span class="pre">upper</span></code>, with
 <code class="docutils literal notranslate"><span class="pre">Y</span></code> a Gaussian vector defined by <cite>loc</cite> and <cite>covariance_matrix</cite>
-(or <cite>scale_tril</cite>).</p></li>
+(or <cite>scale_tril</cite>). Closed form derivative are implemented if
+<cite>lower</cite>, <cite>upper</cite>,  <cite>loc</cite>,  <cite>covariance_matrix</cite> or</p>
+<blockquote>
+<div><p><cite>scale_tril</cite> require a gradient.</p>
+</div></blockquote>
+</li>
 <li><p><strong>error</strong> (<em>torch.Tensor</em>) – The estimated error for each component of <cite>value</cite>. <strong>Returned only
 if</strong> <cite>error_info</cite> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>info</strong> (<em>torch.Tensor</em>) – Tensor of type <code class="docutils literal notranslate"><span class="pre">int32</span></code> informing on the execution for each
@@ -201,7 +212,7 @@ depleted.</p></li>
 <p>Parameters <cite>lower</cite>, <cite>upper</cite> and <cite>covariance_matrix</cite> (or <cite>scale_tril</cite>), as
 well as the returns <cite>value</cite>, <cite>error</cite> and <cite>info</cite> are broadcasted to their
 common batch shape. See PyTorch’ <a class="reference external" href="https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics">broadcasting semantics</a>.</p>
-<p>If any component of <code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">-</span> <span class="pre">upper</span></code> is negative, the function returns a null
+<p>If any component of <code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">-</span> <span class="pre">upper</span></code> is nonpositive, the function returns a null
 tensor with consistent shape.</p>
 <p>Method <code class="docutils literal notranslate"><span class="pre">MonteCarlo</span></code> uses Monte Carlo sampling for estimating <cite>value</cite>, whereas
 <code class="docutils literal notranslate"><span class="pre">method</span> <span class="pre">=</span> <span class="pre">'GenzBretz'</span></code> call a Fortran routine <a class="footnote-reference brackets" href="#id3" id="id1">1</a>.</p>
@@ -212,9 +223,7 @@ computed and passed to the Fortran routine.</p>
 strategy is to start with 1000 times the integration dimension, and then
 increase it if the returned <cite>error</cite> is too large.</p>
 <p>Partial derivative are computed using non-trivial closed form formula.
-See <a class="footnote-reference brackets" href="#id4" id="id2">2</a> for a derivation.</p>
-<p>Using autograd requires that <cite>upper</cite> or <cite>lower</cite> have all its components infinite
-(or unspecified).</p>
+See e.g. <a class="footnote-reference brackets" href="#id4" id="id2">2</a> for a derivation.</p>
 <p class="rubric">References</p>
 <dl class="footnote brackets">
 <dt class="label" id="id3"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
@@ -227,13 +236,18 @@ t-Probabilities”, Journal of Computational and Graphical Statistics 11, pp. 95
 </dl>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="k">import</span> <span class="n">grad</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">x</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">x</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="c1"># Make a positive semi-definite matrix</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">C</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="n">n</span><span class="o">*</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">A</span><span class="o">.</span><span class="n">t</span><span class="p">())</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">mvnorm</span><span class="o">.</span><span class="n">multivariate_normal_cdf</span><span class="p">(</span><span class="n">upper</span><span class="o">=</span><span class="n">x</span><span class="p">,</span><span class="n">covariance_matrix</span><span class="o">=</span><span class="n">C</span><span class="p">)</span>
-<span class="go">tensor(0.1349)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">mvnorm</span><span class="o">.</span><span class="n">multivariate_normal_cdf</span><span class="p">(</span><span class="n">upper</span><span class="o">=</span><span class="n">x</span><span class="p">,</span><span class="n">covariance_matrix</span><span class="o">=</span><span class="n">C</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span>
+<span class="go">tensor(0.3721, grad_fn=&lt;MultivariateNormalCDFBackward&gt;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">,(</span><span class="n">x</span><span class="p">,))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0085</span><span class="p">,</span> <span class="mf">0.2510</span><span class="p">,</span> <span class="mf">0.1272</span><span class="p">,</span> <span class="mf">0.0332</span><span class="p">]),)</span>
 </pre></div>
 </div>
 </dd></dl>
