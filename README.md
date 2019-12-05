@@ -61,7 +61,7 @@ TODO
 I welcome all contributions. Please let me know if you encounter a bug by [filing an issue](https://github.com/SebastienMarmin/torch-mvnorm/issues).
 Feel free to request a feature, make suggestions, share thoughts, etc, using the GitHub plateform or [contacting me](mailto:marmin-public@mailbox.org).
 
-If you came across this work for a publication, please considere citing me for the code or for the mathematical derivation.
+If you came across this work for a publication, please considere citing me for the code or [for the mathematical derivation](https://github.com/SebastienMarmin/torch-mvnorm/bib.bib).
 
 ## License
 
