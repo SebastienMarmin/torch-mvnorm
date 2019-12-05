@@ -102,17 +102,17 @@ class MultivariateNormalCDF(Function):
 CDFapp = MultivariateNormalCDF.apply
 
 def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=None,scale_tril=None,method="GenzBretz",nmc=200, maxpts = 25000, abseps = 0.001, releps = 0, error_info = False):
-    """Compute probabilities by integrating the multivariate normal density. Probability
-    values can be returned with closed-form backward derivatives.
+    """Compute rectangle probabilities for a multivariate normal random vector Z  ``P(l_i < Z_i < u_i, i = 1,...,d)``. Probability values can be returned with closed-form backward derivatives.
     
 
     Parameters
     ----------
     lower : torch.Tensor, optional
-        Lower integration limits.  Can have batch shape. with the
+        Lower integration limits.  Can have batch shape. The
         last dimension is the dimension of the random vector.
         Default is ``None`` which is understood as minus infinity
-        for all components. Values ``numpy.Inf`` are supported.
+        for all components. Values ``- numpy.Inf`` are supported, e.g.
+        if only few components have an infinite boundary.
     upper : torch.Tensor, optional
         Upper integration limits. See `lower`.
     loc : torch.Tensor, optional
@@ -122,7 +122,9 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
         `scale_tril` is not.
     scale_tril : torch.Tensor, optional
         A lower triangular root of the covariance matrix of the Gaussian 
-        vector. Must be provided if `scale_tril` is not.
+        vector (e.g. a Cholesky factor). Must be provided if `covariance_matrix`
+         is not. The method ``'GenzBretz'``, needs the covariance matrix and it
+         will be computed from `scale_tril`.
     method : :obj: str, optional
         Method deployed for the integration. Either ``'MonteCarlo'`` or
         ``'GenzBretz'``.
@@ -143,7 +145,9 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
     value : torch.Tensor
         The probability of the event ``lower < Y < upper``, with
         ``Y`` a Gaussian vector defined by `loc` and `covariance_matrix`
-        (or `scale_tril`).
+        (or `scale_tril`). Closed form derivative are implemented if
+        `lower`, `upper`,  `loc`,  `covariance_matrix` or 
+         `scale_tril` require a gradient.
         
     error : torch.Tensor
         The estimated error for each component of `value`. **Returned only 
@@ -167,7 +171,7 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
     common batch shape. See PyTorch' `broadcasting semantics
     <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
 
-    If any component of ``lower - upper`` is negative, the function returns a null
+    If any component of ``lower - upper`` is nonpositive, the function returns a null
     tensor with consistent shape.
 
     Method ``MonteCarlo`` uses Monte Carlo sampling for estimating `value`, whereas
@@ -181,11 +185,8 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
     strategy is to start with 1000 times the integration dimension, and then
     increase it if the returned `error` is too large.
 
-    Partial derivative are computed using non-trivial closed form formula.
-    See [2]_ for a derivation.
+    Partial derivative are computed using non-trivial closed form formula, see e.g. Marmin et al. [2]_, p 13.
 
-    Using autograd requires that `upper` or `lower` have all its components infinite
-    (or unspecified).
 
     References
     ----------
@@ -193,20 +194,25 @@ def multivariate_normal_cdf(lower=None,upper=None,loc=None,covariance_matrix=Non
     .. [1] Alan Genz and Frank Bretz, "Comparison of Methods for the Computation of Multivariate 
        t-Probabilities", Journal of Computational and Graphical Statistics 11, pp. 950-971, 2002. `Source code <http://www.math.wsu.edu/faculty/genz/software/fort77/mvtdstpack.f>`_.
 
-    .. [2] Sébastien Marmin, Clément Chevalier and David Ginsbourger, "Differentiating the multipoint Expected Improvement for optimal batch design", International Workshop on Machine learning, Optimization and big Data, Taormina, Italy, 2015. `Link <https://hal.archives-ouvertes.fr/hal-01133220v4/document>`_.
+    .. [2] Sébastien Marmin, Clément Chevalier and David Ginsbourger, "Differentiating the multipoint Expected Improvement for optimal batch design", International Workshop on Machine learning, Optimization and big Data, Taormina, Italy, 2015. `PDF <https://hal.archives-ouvertes.fr/hal-01133220v4/document>`_.
 
 
     Examples
     --------
 
     >>> import torch
+    >>> from torch.autograd import grad
     >>> n = 4
     >>> x = 1 + torch.randn(n)
+    >>> x.requires_grad = True
     >>> # Make a positive semi-definite matrix
     >>> A = torch.randn(n,n)
     >>> C = 1/n*torch.matmul(A,A.t())
-    >>> mvnorm.multivariate_normal_cdf(upper=x,covariance_matrix=C)
-    tensor(0.1349)
+    >>> p = mvnorm.multivariate_normal_cdf(upper=x,covariance_matrix=C)
+    >>> p
+    tensor(0.3721, grad_fn=<MultivariateNormalCDFBackward>)
+    >>> grad(p,(x,))
+    >>> (tensor([0.0085, 0.2510, 0.1272, 0.0332]),)
     
     """
     if (covariance_matrix is not None) + (scale_tril is not None) != 1:
