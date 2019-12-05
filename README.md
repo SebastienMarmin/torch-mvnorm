@@ -32,6 +32,8 @@ Torch-MvNorm has minimal overhead as it integrate PyTorch autodiff framework.
 
 ### Dependencies
 
+[Install PyTorch](https://pytorch.org/get-started/locally/).
+
 
 ```
 conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
