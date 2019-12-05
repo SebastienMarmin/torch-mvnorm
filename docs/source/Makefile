@@ -20,7 +20,16 @@ help:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 publish:
-	mv ../html/* ../
+	rm -r ../_static/
+	rm -r ../_sources/
+	rm ../genindex.html
+	rm ../index.html
+	rm ../objects.inv
+	rm ../search.html
+	rm ../searchindex.js
+	cp -r ../html/* ..
+	rm -r ../html/
+
 	git pull
 	git add ..
 	git commit -m "Doc update."

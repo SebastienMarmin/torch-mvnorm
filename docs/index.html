@@ -148,8 +148,7 @@
 <dl class="function">
 <dt id="mvnorm.multivariate_normal_cdf">
 <code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">multivariate_normal_cdf</code><span class="sig-paren">(</span><em class="sig-param">lower=None</em>, <em class="sig-param">upper=None</em>, <em class="sig-param">loc=None</em>, <em class="sig-param">covariance_matrix=None</em>, <em class="sig-param">scale_tril=None</em>, <em class="sig-param">method='GenzBretz'</em>, <em class="sig-param">nmc=200</em>, <em class="sig-param">maxpts=25000</em>, <em class="sig-param">abseps=0.001</em>, <em class="sig-param">releps=0</em>, <em class="sig-param">error_info=False</em><span class="sig-paren">)</span><a class="headerlink" href="#mvnorm.multivariate_normal_cdf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute probabilities by integrating the multivariate normal density. Probability
-values can be returned with closed-form backward derivatives.</p>
+<dd><p>Compute rectangle probabilities P(l_i &lt; Z_i &lt; u_i, i = 1,…,d) for a multivariate normal random vector Z. Probability values can be returned with closed-form backward derivatives.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
