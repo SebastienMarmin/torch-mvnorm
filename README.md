@@ -18,10 +18,10 @@ Torch-MvNorm is a small Python package that allows:
 
 Torch-MvNorm is a library that consists of the two following components:
 
-| **mvnorm.fotran_interface** | interface pyTorch-fortan for using [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f) |
-| **mvnorm.autograd** | implementation of the formula of the multivariate normal CDF gradient |
+- **mvnorm.fotran_interface** -- interface pyTorch-fortan for using [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f)
+- **mvnorm.autograd** -- implementation of the formula of the multivariate normal CDF gradient |
 
-Torch-MvNorm can be used as a research tool for optimizing functions that requires multivariate normal CDF, for example in machine learning.
+Torch-MvNorm can be used as an engineering or research tool for optimizing functions that requires multivariate normal CDF, for example in machine learning.
 
 Torch-MvNorm has minimal overhead as it integrate PyTorch autodiff framework.
 
