@@ -215,22 +215,22 @@ common batch shape. See PyTorch’ <a class="reference external" href="https://p
 <p>If any component of <code class="docutils literal notranslate"><span class="pre">lower</span> <span class="pre">-</span> <span class="pre">upper</span></code> is nonpositive, the function returns a null
 tensor with consistent shape.</p>
 <p>Method <code class="docutils literal notranslate"><span class="pre">MonteCarlo</span></code> uses Monte Carlo sampling for estimating <cite>value</cite>, whereas
-<code class="docutils literal notranslate"><span class="pre">method</span> <span class="pre">=</span> <span class="pre">'GenzBretz'</span></code> call a Fortran routine[1]_.</p>
+<code class="docutils literal notranslate"><span class="pre">method</span> <span class="pre">=</span> <span class="pre">'GenzBretz'</span></code> call a Fortran routine <a class="footnote-reference brackets" href="#id3" id="id1">1</a>.</p>
 <p>If <cite>method</cite> is <code class="docutils literal notranslate"><span class="pre">MonteCarlo</span></code> a Cholesky decomposition of the covariance matrix
 will be performed. Else if <code class="docutils literal notranslate"><span class="pre">GenzBretz</span></code>, only the correlation matrix is
 computed and passed to the Fortran routine.</p>
 <p>The parameter <cite>maxpts</cite> can be used to limit the time. A suggested calibration
 strategy is to start with 1000 times the integration dimension, and then
 increase it if the returned <cite>error</cite> is too large.</p>
-<p>Partial derivative are computed using non-trivial closed form formula, see e.g. Marmin et al. <a class="footnote-reference brackets" href="#id3" id="id1">2</a>, p 13.</p>
+<p>Partial derivative are computed using non-trivial closed form formula, see e.g. Marmin et al. <a class="footnote-reference brackets" href="#id4" id="id2">2</a>, p 13.</p>
 <p class="rubric">References</p>
 <dl class="footnote brackets">
-<dt class="label" id="id2"><span class="brackets">1</span></dt>
+<dt class="label" id="id3"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
 <dd><p>Alan Genz and Frank Bretz, “Comparison of Methods for the Computation of Multivariate
 t-Probabilities”, Journal of Computational and Graphical Statistics 11, pp. 950-971, 2002. <a class="reference external" href="http://www.math.wsu.edu/faculty/genz/software/fort77/mvtdstpack.f">Source code</a>.</p>
 </dd>
-<dt class="label" id="id3"><span class="brackets"><a class="fn-backref" href="#id1">2</a></span></dt>
-<dd><p>Sébastien Marmin, Clément Chevalier and David Ginsbourger, “Differentiating the multipoint Expected Improvement for optimal batch design”, International Workshop on Machine learning, Optimization and big Data, Taormina, Italy, 2015. <a class="reference external" href="https://hal.archives-ouvertes.fr/hal-01133220v4/document">Link</a>.</p>
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
+<dd><p>Sébastien Marmin, Clément Chevalier and David Ginsbourger, “Differentiating the multipoint Expected Improvement for optimal batch design”, International Workshop on Machine learning, Optimization and big Data, Taormina, Italy, 2015. <a class="reference external" href="https://hal.archives-ouvertes.fr/hal-01133220v4/document">PDF</a>.</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
