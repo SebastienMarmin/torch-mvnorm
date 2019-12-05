@@ -53,7 +53,7 @@ TODO
 
 ## Getting Started
 
-- [Tests: run the code on small examples](https://github.com/SebastienMarmin/torch-mvnorm/tests)
+- [Tests: run the code on small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests)
 - Documentation is [here](https://sebastienmarmin.github.io/torch-mvnorm/).
 
 ## Communication and contribution
@@ -61,7 +61,7 @@ TODO
 I welcome all contributions. Please let me know if you encounter a bug by [filing an issue](https://github.com/SebastienMarmin/torch-mvnorm/issues).
 Feel free to request a feature, make suggestions, share thoughts, etc, using the GitHub plateform or [contacting me](mailto:marmin-public@mailbox.org).
 
-If you came across this work for a publication, please considere citing me for the code or [for the mathematical derivation](https://github.com/SebastienMarmin/torch-mvnorm/bib.bib).
+If you came across this work for a publication, please considere citing me for the code or [for the mathematical derivation](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/bib.bib).
 
 ## License
 
