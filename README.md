@@ -9,6 +9,8 @@ Torch-MvNorm is a small Python package that allows
 
 [![DOI](https://zenodo.org/badge/203765393.svg)](https://zenodo.org/badge/latestdoi/203765393)
 
+---
+
 - [About Torch-MvNorm](#about-torch-mvnorm)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
