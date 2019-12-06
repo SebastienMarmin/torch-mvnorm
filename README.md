@@ -69,8 +69,8 @@ python3 tests/test_general.py
 
 ## Getting Started
 
-- [Run the code on small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests).
-- Documentation is [here](https://sebastienmarmin.github.io/torch-mvnorm/).
+- Run the code on [small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests).
+- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/).
 
 ## Communication and contribution
 
