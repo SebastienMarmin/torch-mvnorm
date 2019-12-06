@@ -30,15 +30,21 @@ Torch-MvNorm has minimal overhead as it integrate PyTorch autodiff framework.
 
 ## Installation
 
+
 ### Dependencies
 
 [Install PyTorch](https://pytorch.org/get-started/locally/).
 
-
+Install gfortran and python-dev
 ```
-conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi typing
+sudo apt-get install gfortran
+sudo apt-get install python-dev
 ```
 
+Install joblib and Cython python modules
+```
+python3 -m pip install joblib Cython
+```
 
 ### Get the Torch-MvNorm source
 ```bash
@@ -46,10 +52,18 @@ git clone --recursive https://github.com/SebastienMarmin/torch-mvnorm
 cd torch-mvnorm
 ```
 
+
 ### Install Torch-MvNorm
-On Linux
-```bash
-TODO
+
+Compile Fortran and build the interface
+```
+cd mvnorm/fortran_interface/
+python3 setup.py build_ext --inplace
+```
+
+### Test the code
+```
+python3 tests/test_general.py
 ```
 
 
