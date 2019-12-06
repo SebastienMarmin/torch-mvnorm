@@ -1,4 +1,4 @@
-Torch-MvNorm
+Torch-MvNorm [![DOI](https://zenodo.org/badge/203765393.svg)](https://zenodo.org/badge/latestdoi/203765393)
 --------------------------------------------------------------------------------
 
 Torch-MvNorm is a small Python package that allows
