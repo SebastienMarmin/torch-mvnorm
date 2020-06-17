@@ -2,11 +2,15 @@
 from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
 # This line only needed if building with NumPy in Cython file.
-from numpy import get_include
 from os import system, mkdir # only for creating temp folder
 
+# Make sure numpy and Cython get installed first.
+from setuptools import dist
+dist.Distribution().fetch_build_eggs(['Cython>=0.29.15', 'numpy>=1.18.0'])
+
+from Cython.Distutils import build_ext
+from numpy import get_include
 
 build_path = "./mvnorm/fortran_interface/build/"
 try:
