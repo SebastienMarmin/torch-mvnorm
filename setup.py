@@ -8,35 +8,33 @@ from numpy import get_include
 from os import system, mkdir # only for creating temp folder
 
 
-temp_path = "./temp/"
+build_path = "./mvnorm/fortran_interface/build/"
 try:
-      mkdir(temp_path)
+      mkdir(build_path)
 except OSError:
       pass
-      
-  
-  
+
 
 # compile the fortran modules without linking
-fortran_mod_comp = 'gfortran ./external_source/mvtdst.f -c -o ./temp/gfunc.o -O3 -fPIC -ffixed-form'
+fortran_mod_comp = 'gfortran ./mvnorm/fortran_interface/external_source/mvtdst.f -c -o ./mvnorm/fortran_interface/build/gfunc.o -O3 -fPIC -ffixed-form'
 print (fortran_mod_comp)
 system(fortran_mod_comp)
-shared_obj_comp = 'gfortran ./compilation/pygfunc.f90 -c -o ./temp/pygfunc.o -O3 -fPIC'
+shared_obj_comp = 'gfortran ./mvnorm/fortran_interface/compilation/pygfunc.f90 -c -o ./mvnorm/fortran_interface/build/pygfunc.o -O3 -fPIC'
 print (shared_obj_comp)
 system(shared_obj_comp)
 
 
-
 ext_modules = [Extension(# module name:
-                         'pygfunc',
+                         'mvnorm.fortran_interface.pygfunc',
                          # source file:
-                         ['./compilation/pygfunc.pyx'],
+                         ['./mvnorm/fortran_interface/compilation/pygfunc.pyx'],
                          # other compile args for gcc
                          extra_compile_args=['-fPIC', '-O3'],
                          # other files to link to
-                         extra_link_args=['./temp/gfunc.o', './temp/pygfunc.o'])]
+                         extra_link_args=['./mvnorm/fortran_interface/build/gfunc.o',
+                                 './mvnorm/fortran_interface/build/pygfunc.o'])]
 
-setup(name = 'pygfunc',
+setup(name = 'mvnorm',
       cmdclass = {'build_ext': build_ext},
       # Needed if building with NumPy.
       # This includes the NumPy headers when compiling.
