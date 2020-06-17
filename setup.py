@@ -1,5 +1,5 @@
 # advice command : python3 setup.py build_ext --inplace
-
+from setuptools import find_packages
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
@@ -34,9 +34,12 @@ ext_modules = [Extension(# module name:
                          extra_link_args=['./mvnorm/fortran_interface/build/gfunc.o',
                                  './mvnorm/fortran_interface/build/pygfunc.o'])]
 
-setup(name = 'mvnorm',
-      cmdclass = {'build_ext': build_ext},
-      # Needed if building with NumPy.
-      # This includes the NumPy headers when compiling.
-      include_dirs = [get_include()],
-      ext_modules = ext_modules)
+setup(
+    name = 'mvnorm',
+    version="0.1",
+    packages=find_packages(),
+    cmdclass = {'build_ext': build_ext},
+    # Needed if building with NumPy.
+    # This includes the NumPy headers when compiling.
+    include_dirs = [get_include()],
+    ext_modules = ext_modules)
