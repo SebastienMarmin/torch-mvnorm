@@ -59,7 +59,6 @@ cd torch-mvnorm
 
 Compile Fortran and build the interface:
 ```
-cd mvnorm/fortran_interface/
 python3 setup.py build_ext --inplace
 ```
 
