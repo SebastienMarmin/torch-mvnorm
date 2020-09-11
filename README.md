@@ -39,13 +39,17 @@ Torch-MvNorm has minimal overhead as it integrate PyTorch autodiff framework.
 
 - Install gfortran and python-dev
 ```
+sudo apt-get update -y
 sudo apt-get install gfortran
 sudo apt-get install python-dev
 ```
 
-- Install joblib and Cython python modules
+- Install joblib python modules (and Cython, check in python3 if not already installed)
 ```
-python3 -m pip install joblib Cython
+sudo apt-get install -y python3-joblib
+```
+```
+python3 -m pip install Cython
 ```
 
 ### Get the Torch-MvNorm source
