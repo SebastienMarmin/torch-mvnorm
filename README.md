@@ -4,7 +4,7 @@ Torch-MvNorm
 Torch-MvNorm is a small Python package that allows
 
 - Multivariate normal density integration, in particular computing cumulative distribution functions (CDFs)
-- Partial differentiaton of CDFs through implementation of closed-form formulas (see [Marmin et al. 2019](https://hal.archives-ouvertes.fr/hal-01133220v4/document), appendix 6)
+- Partial differentiaton of CDFs through implementation of closed-form formulas (see e.g. [Marmin et al. 2019](https://hal.archives-ouvertes.fr/hal-01133220v4/document), appendix 6)
 - Quantities manipulation within PyTorch tensor-based framework
 
 [![DOI](https://zenodo.org/badge/203765393.svg)](https://zenodo.org/badge/latestdoi/203765393)
