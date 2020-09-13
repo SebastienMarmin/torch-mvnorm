@@ -44,10 +44,12 @@ sudo apt-get install gfortran
 sudo apt-get install python-dev
 ```
 
-- Install joblib python modules (and Cython, check in python3 if not already installed)
+- Install joblib python modules
 ```
 sudo apt-get install -y python3-joblib
 ```
+
+- Check in your python3 console if you already have Cython installed. if not, you can try:
 ```
 python3 -m pip install Cython
 ```
