@@ -49,7 +49,7 @@ sudo apt-get install python-dev
 sudo apt-get install -y python3-joblib
 ```
 
-- Check in your python3 console `import Cython`. If not already installed, you can try:
+- Check in your python3 console `from Cython.Distutils import build_ext`. If Cython is not already installed, you can try:
 ```
 python3 -m pip install Cython
 ```
