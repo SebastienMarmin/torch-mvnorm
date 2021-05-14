@@ -22,8 +22,8 @@ Torch-MvNorm is a small Python package that allows
 
 Torch-MvNorm is a library that consists of the two following components:
 
-- **mvnorm.fotran_interface** -- PyTorch-Fortan bridge for [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f)
-- **mvnorm.autograd** -- implementation of the formula of the multivariate normal CDF gradient
+- **integration** -- PyTorch-Fortan bridge for [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f) using SciPy.
+- **multivariate_normal_cdf** -- implementation of the formula of the multivariate normal CDF gradient
 
 
 ## Installation
@@ -33,22 +33,12 @@ Torch-MvNorm is a library that consists of the two following components:
 
 - [Install PyTorch](https://pytorch.org/get-started/locally/)
 
-- Install gfortran and python-dev
-```
-sudo apt-get update -y
-sudo apt-get install gfortran
-sudo apt-get install python-dev
-```
-
-- Install joblib python modules
+- Install joblib python module, e.g.
 ```
 sudo apt-get install -y python3-joblib
 ```
 
-- Check in your python3 console `from Cython.Distutils import build_ext`. If Cython is not already installed, you can try:
-```
-python3 -m pip install Cython
-```
+- Install SciPy python module.
 
 ### Get the Torch-MvNorm source
 ```bash
@@ -56,24 +46,15 @@ git clone --recursive https://github.com/SebastienMarmin/torch-mvnorm
 cd torch-mvnorm
 ```
 
-
-### Install Torch-MvNorm
-
-Compile Fortran and build the interface:
-```
-python3 setup.py build_ext --inplace
-```
-
 ### Test the code
 ```
-python3 tests/test_general.py
+python3 tests/test_parallele.py
 ```
-
 
 ## Getting Started
 
 - Run the code on [small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests).
-- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/).
+- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/). TODO updates.
 
 ## Communication and contribution
 
