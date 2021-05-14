@@ -1,5 +1,5 @@
 NEW: differentiation w.r.t. covariance is now supported!
-
+Installation is also simplified using SciPy.
 
 Torch-MvNorm
 --------------------------------------------------------------------------------
