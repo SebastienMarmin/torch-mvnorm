@@ -25,7 +25,7 @@ Torch-MvNorm is a small Python package that allows
 Torch-MvNorm is a library that consists of the two following components:
 
 - **integration** -- PyTorch-Fortan bridge for [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f) using SciPy.
-- **multivariate_normal_cdf** -- implementation of the formula of the multivariate normal CDF gradient, with respect to location and **covariance**.
+- **multivariate_normal_cdf** -- implementation of the formula of the multivariate normal CDF gradient, with respect to location and covariance.
 
 
 ## Installation
