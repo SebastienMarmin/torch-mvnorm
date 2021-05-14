@@ -1,3 +1,6 @@
+NEW: differentiation w.r.t. covariance is now supported!
+
+
 Torch-MvNorm
 --------------------------------------------------------------------------------
 
