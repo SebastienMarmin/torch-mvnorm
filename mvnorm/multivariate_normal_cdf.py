@@ -1,27 +1,19 @@
-from numpy import zeros_like
-from torch import tensor, diagonal, cat, unbind, ones as torch_ones, zeros as torch_zeros, ones_like, tril_indices as torch_tril_indices, triu_indices as torch_triu_indices,tril,triu,diag_embed, erfc # onely for dev
-from torch.autograd import Function, grad # only for test
-
-from torch import tensor, diagonal, cat, unbind, zeros as torch_zeros, Tensor, Size, matmul,int32
-from torch.distributions import MultivariateNormal
-
+from numpy import zeros_like as np_zeros_like
+from torch import tensor, diagonal, zeros, tril_indices, tril, triu, diag_embed, erfc, from_numpy
 from torch.autograd import Function
-from torch import randn, from_numpy
-from numpy import Inf
 
 from .integration import hyperrectangle_integration
 from .conditioning import make_condition
 
 
-sqrt5 = 2.2360679774997898050514777424
 def phi(z,v):
     return 0.39894228040143270286321808271/v.sqrt()*(-z**2/(2*v)).exp()
-#                 ^ oneOverSqrt2pi     
+    #              ^ oneOverSqrt2pi     
 
-sqrt2M1 = 0.70710678118654746171500846685
 def Phi1D(x,m,c):
     z = (x-m)/c.squeeze(-1).sqrt()
-    return (erfc(-z*sqrt2M1)/2).squeeze(-1)
+    return (erfc(-z*0.70710678118654746171500846685)/2).squeeze(-1)
+    #                  ^ sqrt(2)/2
 
 def phi2_sub(z,C): # compute pairs of bivariate densities and organize them in a matrix
     V = diagonal(C,dim1=-2,dim2=-1)
@@ -42,15 +34,16 @@ def to_torch(x):
         return from_numpy(x)
 
 
-
 class PhiHighDim(Function):
 
     @staticmethod
     def forward(ctx, m, c):
         m_np = m.numpy()
+        x_np = np_zeros_like(m_np)
         c_np = .5*(c+c.transpose(-1,-2)).numpy()
         ctx.save_for_backward(m,c)
-        return to_torch(hyperrectangle_integration(None,zeros_like(m_np),m_np,c_np))
+        res_np = hyperrectangle_integration(None,x_np,m_np,c_np)
+        return to_torch(res_np)
 
     @staticmethod
     def backward(ctx,grad_output):
@@ -72,10 +65,10 @@ class PhiHighDim(Function):
                 if d==2:
                     P2 = 1
                 else:
-                    trilind = torch_tril_indices(d,d-1,offset=-1)
+                    trilind = tril_indices(d,d-1,offset=-1)
                     m_cond2,c_cond2 = make_condition(0,m_cond,c_cond)
                     Q_l = Phi(m_cond2[...,trilind[0],trilind[1],:],c_cond2[...,trilind[0],trilind[1],:,:])
-                    P2 = torch_zeros(*Q_l.shape[:-1],d,d,dtype=Q_l.dtype)
+                    P2 = zeros(*Q_l.shape[:-1],d,d,dtype=Q_l.dtype)
                     P2[...,trilind[0],trilind[1]] = Q_l
                     P2[...,trilind[1],trilind[0]] = Q_l
                 p2 = phi2_sub(m,c)
@@ -84,7 +77,6 @@ class PhiHighDim(Function):
                 grad_c = .5*(hess + diag_embed(D))
                 res_c = grad_output_u1.unsqueeze(-1)*grad_c
         return res_m, res_c
-
 
 Phinception = PhiHighDim.apply
 
@@ -125,12 +117,7 @@ if __name__ == "__main__":
     a = torch.rand(*batch_shape,d,d)#,dtype=torch.float64)
     c = torch.matmul(a,a.transpose(-1,-2))
     
-    
-    #coef = torch.tensor([10*i for i in range(int(np.prod(batch_shape)))]).reshape(batch_shape)
-    #np.save("m",m.detach().numpy())
-    #np.save("c",c.detach().numpy())
-    #print("coef=",end="")
-    #print(coef)
+  
     P = (Phi(m,c))
     print("P =",end=" ")
     print(P)
@@ -145,73 +132,3 @@ if __name__ == "__main__":
     print(grad(P,[c])[0])
     t2 = time.time()
     print(t2-t1)
-    #dP = grad(P,[m,c])
-    #print("dPdm")
-    #print("dP =",end=" ")
-    #print(dP)
-
-    #res = torch.autograd.gradcheck(Phi.apply, (m, c),atol=0.001,rtol=0.01, nondet_tol=0.02, raise_exception=True)
-    #print(res) 
-
-"""
-    import torch
-    # Create functional linked with autograd machinerie.
-    Phi_app = Phi.apply
-    d = 4
-    m = randn(d,requires_grad=True)
-    a = randn(d,d)
-    c = torch.matmul(a,a.t())
-    P = Phi_app(m,c)
-    dPdm = grad(P,[m], create_graph=True)[0]
-    print("dPdm")
-    print(dPdm)
-    d2Pdm2 = grad(dPdm[0],[m], create_graph=True)[0]
-    print("d2Pdm2")
-    print(d2Pdm2)
-    d3Pdm3 = grad(d2Pdm2[0],[m])[0]
-    print("d3Pdm3")
-    print(d3Pdm3)
-    #print((c**3*(x*c).sin()).detach())
-"""
-
-"""
-Q_l = _parallel_CDF(m_cond2,c_cond2,ctx.maxpts,ctx.abseps,ctx.releps)
-Q = torch_zeros(*Q_l.shape[:-1],d,d)
-trilind = torch_tril_indices(d,d,offset=-1)
-triuind = torch_triu_indices(d,d,offset =1)
-Q[...,trilind[0],trilind[1]] = Q_l
-Q[...,triuind[0],triuind[1]] = Q_l
-q = phi2_sub(val,c)
-hess = q*Q
-D = -(val*res+(hess*c).sum(-1))/var
-grad_c = hess + diag_embed(D)
-"""
-
-
-"""
-
-
-class MultivariateNormalCDF(Function):
-    @staticmethod
-    def forward(ctx, x, c):
-        ctx.save_for_backward(x,c)
-        out_np = f(x.numpy(),c.numpy())
-        out = to_torch(out_np)# .float()#.to(device)
-        return out 
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        x,c = ctx.saved_tensors
-        need_x, need_c = ctx.needs_input_grad[:2]
-        grad_x = grad_c = None
-        if need_x:
-            grad_x_np = dfdx(x.numpy(),c.numpy())
-            grad_x = to_torch(grad_x_np)# .float()#.to(device)
-        if need_c:
-            grad_c_np = dfdc(x.numpy(),c.numpy())
-            grad_c = to_torch(grad_c_np)
-        return grad_x, grad_c
-
-
-
-"""
