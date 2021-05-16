@@ -33,7 +33,6 @@ def phi2_sub(z,C): # compute pairs of bivariate densities and organize them in a
     res = 0.15915494309189534560822210096/det.sqrt()*(exponent).exp()
     #           ^ oneOver2pi     
     return tril(res,-1) + triu(res,1)
- 
 
 
 def to_torch(x):
@@ -97,8 +96,6 @@ def Phi(m,c):
         return Phinception(m,c)
 
 if __name__ == "__main__":
-    import torch
-    import numpy as np
     import torch                                                                                          
                                                                                                       
     def jacobian(y, x, create_graph=False):                                                               
