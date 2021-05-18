@@ -3,7 +3,7 @@ from torch import zeros
 from torch.autograd import grad
 import sys
 sys.path.append(".")
-from mvnorm import Phi, integration
+from mvnorm import multivariate_normal_cdf as Phi, integration
 
 
 
@@ -11,7 +11,7 @@ from mvnorm import Phi, integration
 def dPdC_num(m,c):
     d = c.size(-1)
     res = torch.empty(d)
-    p = Phi(m,c)
+    p = Phi(0,m,c)
     h = 0.005
     res = torch.empty(d,d)
     for i in range(d):
@@ -19,7 +19,7 @@ def dPdC_num(m,c):
             ch = c.clone()
             ch[i,j] = ch[i,j]+h/2
             ch[j,i] = ch[j,i]+h/2
-            ph = Phi(m,ch)
+            ph = Phi(0,m,ch)
             res[i,j] = (ph-p)/h
     return res
 
@@ -28,12 +28,12 @@ def dPdC_num(m,c):
 def dPdx_num(m,c, maxpts = 25000, abseps = 0.000001, releps = 0):
     d = c.size(-1)
     res = torch.empty(d)
-    p = Phi(m,c)
+    p = Phi(0,m,c)
     h = 0.005
     for i in range(d):
         mh = m.clone()
         mh[i] = mh[i]+h
-        ph = Phi(mh,c)
+        ph = Phi(0,mh,c)
         res[i] = (ph-p)/h
     return res
 
@@ -47,7 +47,7 @@ def d2Pdx2_num(m,c):
         for j in range(d):
             yy = zeros(d)
             yy[j] = 1
-            res[i,j] = (1/h**2*(Phi(m + .5*h*(zz+yy), c) - Phi(m + .5*h*(-zz+yy), c)-(Phi(m + .5*h*(zz-yy), c) - Phi(m + .5*h*(-zz-yy), c)))).detach()
+            res[i,j] = (1/h**2*(Phi(0,m + .5*h*(zz+yy), c) - Phi(0,m + .5*h*(-zz+yy), c)-(Phi(0,m + .5*h*(zz-yy), c) - Phi(0,m + .5*h*(-zz-yy), c)))).detach()
     return 0.5*(res.transpose(-2,-1)+res)
 
 def jacobian(y, x, create_graph=False):                                                               
@@ -77,7 +77,7 @@ integration.releps=0
 mean = torch.zeros(d)
 mean.requires_grad = True
 C.requires_grad = True
-P = Phi(mean,C)
+P = Phi(0,mean,C)
 dPdm, dPdC = grad(P,(mean,C),create_graph=True)
 
 print("___Gradient___   dPhi/dm")

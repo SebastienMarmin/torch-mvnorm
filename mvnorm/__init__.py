@@ -1,2 +1,2 @@
-from .multivariate_normal_cdf import Phi
+from .multivariate_normal_cdf import multivariate_normal_cdf
 from .integration import integration

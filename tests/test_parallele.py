@@ -3,7 +3,7 @@ from torch import randn, matmul
 from torch.autograd import grad
 import sys
 sys.path.append(".")
-from mvnorm import Phi, integration
+from mvnorm import multivariate_normal_cdf as Phi, integration
 from time import time
 
 # Computation of P(Y<0), Y ~ N(m,C), by density integration.
@@ -31,7 +31,7 @@ integration.releps=1e-6 # default
 integration.n_jobs = 1 # joblib parameter
 
 t1 = time()
-print(Phi(m,C))
+print(Phi(0,m,C))
 t2 = time()
 
 print("With "+str(integration.n_jobs)+" job(s):"+str(round(t2-t1,3))+" s.")
@@ -39,7 +39,7 @@ print("With "+str(integration.n_jobs)+" job(s):"+str(round(t2-t1,3))+" s.")
 
 integration.n_jobs = 10
 t1 = time()
-print(Phi(m,C))
+print(Phi(0,m,C))
 t2 = time()
 
 print("With "+str(integration.n_jobs)+" job(s):"+str(round(t2-t1,3))+" s.")

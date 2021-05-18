@@ -1,17 +1,8 @@
-from itertools import zip_longest
+from numpy.core.numeric import full_like, zeros_like
 from scipy.stats import mvn
 from numpy import array, zeros, int32,broadcast_to, Inf,full
 from joblib import Parallel, delayed
 
-def prod(tup):
-    a = 1
-    for i in tup:
-        a *= i
-    return a
-
-def broadcast_shape(a,b):
-    res = reversed(tuple(i if j==1 else (j if i==1 else (i if i==j else -1)) for i,j in zip_longest(reversed(a),reversed(b),fillvalue=1)))
-    return list(res)
 
 class ParameterBox:
     pass
@@ -37,24 +28,26 @@ def parallel_integration(l,u,m,c):
     return v, i
 
 
-def hyperrectangle_integration(lower,upper,mean,covariance,info=False):
+def prod(tup):
+    a = 1
+    for i in tup:
+        a *= i
+    return a
+
+def hyperrectangle_integration(mean,covariance,lower=None,upper=None,info=False):
     # parallel batch version of scipy.stats.mvn
     # no pytorch here
-    d = covariance.shape[-1]
-    if mean is None:
-        mean = zeros(d)
-    if lower is None:
-        lower = full(d,-Inf)
-    if upper is None:
-        upper = full(d,Inf)
-    batch_shape = broadcast_shape(lower.shape[:-1],broadcast_shape(upper.shape[:-1],covariance.shape[:-2]))
-    vector_shape = batch_shape + [d]
-    matrix_shape = batch_shape + [d,d]
+    # default: integration over the first orthant (for all i, Y_i<0)
+    ms = mean.shape
+    batch_shape = ms[:-1]
+    d = ms[-1]
+
     N = prod(batch_shape)
-    l = broadcast_to(lower,vector_shape).reshape(N,d)
-    u = broadcast_to(upper,vector_shape).reshape(N,d)
-    m  = broadcast_to(mean ,vector_shape).reshape(N,d)
-    c = broadcast_to(covariance,matrix_shape).reshape(N,d,d)
+    m = mean.reshape(N,d)
+    l = full_like(m,-Inf) if lower is None else lower.reshape(N,d)
+    u = zeros_like(m) if upper is None else upper.reshape(N,d)
+    c = covariance.reshape(N,d,d)
+
 
     v, i = parallel_integration(l,u,m,c)
     values = array(v).reshape(batch_shape)
