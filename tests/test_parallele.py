@@ -40,3 +40,5 @@ print(Phi(0,m,C))
 t2 = time()
 
 print("With "+str(integration.n_jobs)+" job(s):"+str(round(t2-t1,3))+" s.")
+
+

@@ -1,34 +1,40 @@
 from itertools import zip_longest
-from torch import broadcast_to
+from torch import broadcast_to, ones, erfc
+import torch
 from .Phi import Phi
 
 def broadcast_shape(a,b):
     res = reversed(tuple(i if j==1 else (j if i==1 else (i if i==j else -1)) for i,j in zip_longest(reversed(a),reversed(b),fillvalue=1)))
     return list(res)
 
-def multivariate_normal_cdf(value,loc=None,covariance_matrix=None):
-    """Compute rectangle probabilities for a multivariate normal random vector Z 
-     ``P(Z_i < values_i, i = 1,...,d)``. 
+def Phi1D(z):
+    return erfc(-z*0.70710678118654746171500846685)/2
+    #                  ^ sqrt(2)/2
+
+def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,cov_diagonal=False):
+    """Compute orthant probabilities for a multivariate normal random vector Z 
+     ``P(Z_i < value_i, i = 1,...,d)``. 
     Probability values can be returned with closed-form backward derivatives.
     
     Parameters
     ----------
-    value : torch.Tensor, optional
-        upper integration limits.  Can have batch shape. The
-        last dimension is the dimension of the random vector.
-        Default is ``None`` which is understood as minus infinity
-        for all components. Values ``- numpy.Inf`` are supported, e.g.
-        if only few components have an infinite boundary. The last 
-        dimension must be equal to d, the dimension of the Gaussian
-        vector.
+    value : torch.Tensor,
+        upper integration limits. Can have batch shape.
+        The last dimension must be equal to d, the dimension of the
+        Gaussian vector.
     loc : torch.Tensor, optional
         Mean of the Gaussian vector. Default is zeros. Can have batch
-        shape. last dimension must be equal to d, the dimension of the
+        shape. Last dimension must be equal to d, the dimension of the
         Gaussian vector.
     covariance_matrix : torch.Tensor, optional
-        Covariance matrix of the Gaussian vector. Must be provided.
+        Covariance matrix of the Gaussian vector.
         Can have batch shape. The two last dimensions must be equal to d,
-        the dimension of the Gaussian vector.
+        the dimension of the Gaussian vector. Identity matrix by default.
+        If the covariance is diagonal, `cov_diagonal` can be set to
+        ``True`` and `covariance_matrix` must have the same shape as 
+        `value` (or be broadcastable to `value`).
+    cov_diagonal=False : boolean, optional
+        See `covariance_matrix`. Avoid expensive numerical integration.
     Returns
     -------
     value : torch.Tensor
@@ -39,8 +45,8 @@ def multivariate_normal_cdf(value,loc=None,covariance_matrix=None):
     Notes
     -------
     Parameters `value` and `covariance_matrix`, as 
-    well as the returns `value`, `error` and `info` are broadcasted to their
-    common batch shape. See PyTorch' `broadcasting semantics
+    well as the returned probability tensor are broadcasted to their
+    common batch shape. See PyTo    rch' `broadcasting semantics
     <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
     See the integration parameters. TODO
     Partial derivative are computed using closed form formula, see e.g. Marmin et al. [2]_, p 13.
@@ -65,9 +71,14 @@ def multivariate_normal_cdf(value,loc=None,covariance_matrix=None):
     >>> grad(p,(x,))
     >>> (tensor([0.0085, 0.2510, 0.1272, 0.0332]),)
     """
-
-    if loc is None:
-        loc = 0.0
+    x_shape = value.shape
+    d = x_shape[-1]
+    if covariance_matrix is None:
+        covariance_matrix = ones_like(value)
+        cov_diagonal = True
+    if cov_diagonal:
+        z = (value-loc)/covariance_matrix.sqrt()
+        return Phi1D(z).prod(-1)
     cov_shape = covariance_matrix.shape[-2:]
     if len(cov_shape) < 2:
         raise ValueError("covariance_matrix must have at least \
