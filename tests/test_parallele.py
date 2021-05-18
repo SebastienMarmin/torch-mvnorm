@@ -7,9 +7,6 @@ from mvnorm import multivariate_normal_cdf as Phi, integration
 from time import time
 
 # Computation of P(Y<0), Y ~ N(m,C), by density integration.
-# NOTE For P(Y<x), replace "m" by "m+x".
-# Future releases may have P(x,m,c), or even P(l,u,m,c).
-
 batch_dim = [23,12] # do 276 probability computations in one tensor, can be "[]"
 
 d = 15 # dimension of the random vector
