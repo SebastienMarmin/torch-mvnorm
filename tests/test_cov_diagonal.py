@@ -11,7 +11,7 @@ from numpy import sqrt
 batch_dim = [2,8] # do 276 probability computations in one tensor, can be "[]"
 
 d = 23 # dimension of the random vector
-x = randn(*batch_dim,d)+sqrt(d)
+x = randn(*batch_dim,d)+0.5*sqrt(d)
 # Compute an arbitrary covariance
 D = randn(*batch_dim,d)**2
 C = torch.diag_embed(D,dim1=-2,dim2=-1)
