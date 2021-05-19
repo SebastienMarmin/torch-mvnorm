@@ -157,12 +157,12 @@
 <dl class="py function">
 <dt id="mvnorm.multivariate_normal_cdf">
 <code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">multivariate_normal_cdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">loc</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">covariance_matrix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">diagonality_tolerance</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mvnorm.multivariate_normal_cdf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute orthant probabilities for a multivariate normal random vector Z
-<code class="docutils literal notranslate"><span class="pre">P(Z_i</span> <span class="pre">&lt;</span> <span class="pre">value_i,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1,...,d)</span></code>. Probability values can be returned with closed-form backward derivatives.</p>
+<dd><p>Compute orthant probabilities <code class="docutils literal notranslate"><span class="pre">P(Z_i</span> <span class="pre">&lt;</span> <span class="pre">value_i,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1,...,d)</span></code> for a multivariate normal random vector Z.
+Closed-form backward derivatives with respect to mean and covariance is supported.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>value</strong> (<em>torch.Tensor</em><em>,</em>) – upper integration limits. Can have batch shape.
+<li><p><strong>value</strong> (<em>torch.Tensor</em><em>,</em>) – upper integration limits. It can have batch shape.
 The last dimension must be equal to d, the dimension of the
 Gaussian vector.</p></li>
 <li><p><strong>loc</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Mean of the Gaussian vector. Default is zeros. Can have batch
@@ -170,13 +170,13 @@ shape. Last dimension must be equal to d, the dimension of the
 Gaussian vector. If a float is provided, the value is repeated
 for all the d components.</p></li>
 <li><p><strong>covariance_matrix</strong> (<em>torch.Tensor</em><em>, </em><em>optional</em>) – Covariance matrix of the Gaussian vector.
-Can have batch shape. The two last dimensions must be equal to d,
-the dimension of the Gaussian vector. Identity matrix by default.</p></li>
+Can have batch shape. The two last dimensions must be equal
+to d. Identity matrix by default.</p></li>
 <li><p><strong>diagonality_tolerance=0.0</strong> (<em>float</em><em>, </em><em>optional</em>) – Avoid expensive numerical integration if the maximum of all
 off-diagonal values is below this tolerance (in absolute value),
 as the covariance is considered diagonal. If there is a batch of
 covariances (e.g. <cite>covariance_matrix</cite> has shape [N,d,d]), then
-the numerical integrations are avoided only if ALL covariances
+the numerical integrations are avoided only if <em>all</em> covariances
 are considered diagonal. Diagonality check can be avoided with
 a negative value.</p></li>
 </ul>

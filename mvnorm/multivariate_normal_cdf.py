@@ -11,13 +11,13 @@ def PhiDiagonal(z):
     #                  ^ sqrt(2)/2
 
 def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tolerance=0.0):
-    """Compute orthant probabilities for a multivariate normal random vector Z 
-    ``P(Z_i < value_i, i = 1,...,d)``. Probability values can be returned with closed-form backward derivatives.
+    """Compute orthant probabilities ``P(Z_i < value_i, i = 1,...,d)`` for a multivariate normal random vector Z.
+    Closed-form backward derivatives with respect to mean and covariance is supported.
 
     Parameters
     ----------
     value : torch.Tensor,
-        upper integration limits. Can have batch shape.
+        upper integration limits. It can have batch shape.
         The last dimension must be equal to d, the dimension of the
         Gaussian vector.
     loc : torch.Tensor, optional
@@ -27,14 +27,14 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
         for all the d components.
     covariance_matrix : torch.Tensor, optional
         Covariance matrix of the Gaussian vector.
-        Can have batch shape. The two last dimensions must be equal to d,
-        the dimension of the Gaussian vector. Identity matrix by default.
+        Can have batch shape. The two last dimensions must be equal
+        to d. Identity matrix by default.
     diagonality_tolerance=0.0 : float, optional
         Avoid expensive numerical integration if the maximum of all
         off-diagonal values is below this tolerance (in absolute value),
         as the covariance is considered diagonal. If there is a batch of
         covariances (e.g. `covariance_matrix` has shape [N,d,d]), then
-        the numerical integrations are avoided only if ALL covariances
+        the numerical integrations are avoided only if *all* covariances
         are considered diagonal. Diagonality check can be avoided with
         a negative value.
     Returns
