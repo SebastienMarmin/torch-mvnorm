@@ -29,11 +29,17 @@ t2 = time()
 print("With full matrix and "+str(integration.n_jobs)+" job(s):"+str(round(t2-t1,3))+" s.")
 
 
-integration.n_jobs = 10
+
 t1 = time()
 print(Phi(x,covariance_matrix=C,diagonality_tolerance=0))
 t2 = time()
 
 print("With knowing it's actually diagonal and 1 job:"+str(round(t2-t1,3))+" s.")
 
+
+t1 = time()
+print(Phi(x,covariance_matrix=C+1e-4,diagonality_tolerance=2e-4))
+t2 = time()
+
+print("With detecting it's almost diagonal:"+str(round(t2-t1,3))+" s.")
 
