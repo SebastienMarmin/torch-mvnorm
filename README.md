@@ -56,7 +56,7 @@ python3 tests/test_parallele.py
 ## Getting Started
 
 - Run the code on [small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests).
-- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/). TODO updates.
+- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/).
 
 ## Communication and contribution
 
