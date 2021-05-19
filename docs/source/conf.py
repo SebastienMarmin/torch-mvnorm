@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/home/sebastien/Modules pour PyTorch/torch-mvnorm/'))
+sys.path.insert(0, os.path.abspath('/home/sebastien/codes_source/torch-mvnorm/'))
 import sphinx_rtd_theme
 from recommonmark.parser import CommonMarkParser
 from recommonmark.transform import AutoStructify
@@ -30,11 +30,11 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = 'torch-mvnorm'
-copyright = '2019, Sébastien Marmin'
+copyright = '2021, Sébastien Marmin'
 author = 'Sébastien Marmin'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = '0.0.5'
 
 
 # -- General configuration ---------------------------------------------------
@@ -71,4 +71,4 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']

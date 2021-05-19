@@ -1,6 +1,5 @@
 from itertools import zip_longest
 from torch import broadcast_to, erfc, eye, tril, diagonal
-import torch
 from .Phi import Phi
 
 def broadcast_shape(a,b):
@@ -13,9 +12,8 @@ def PhiDiagonal(z):
 
 def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tolerance=0.0):
     """Compute orthant probabilities for a multivariate normal random vector Z 
-     ``P(Z_i < value_i, i = 1,...,d)``. 
-    Probability values can be returned with closed-form backward derivatives.
-    
+    ``P(Z_i < value_i, i = 1,...,d)``. Probability values can be returned with closed-form backward derivatives.
+
     Parameters
     ----------
     value : torch.Tensor,
@@ -39,18 +37,20 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
         the numerical integrations are avoided only if ALL covariances
         are considered diagonal. Diagonality check can be avoided with
         a negative value.
-    value : torch.Tensor
-        The probability of the event ``Y < value``, with
-        ``Y`` a Gaussian vector defined by `loc` and `covariance_matrix`.
+    Returns
+    -------
+    probability : torch.Tensor
+        The probability of the event ``Y < value``. Its shape is the
+        the broadcasted batch shape (just a scalar if the batchshape is []).
         Closed form derivative are implemented if `value`  `loc`,
-        `covariance_matrix` require a gradient.
+        `covariance_matrix` require a gradient. Can 
     Notes
     -------
     Parameters `value` and `covariance_matrix`, as 
     well as the returned probability tensor are broadcasted to their
-    common batch shape. See PyTo    rch' `broadcasting semantics
+    common batch shape. See PyTorch' `broadcasting semantics
     <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
-    See the integration parameters. TODO
+    The integration is performed with Scipy's impementation of [1]_. See the integration parameters. TODO
     Partial derivative are computed using closed form formula, see e.g. Marmin et al. [2]_, p 13.
     References
     ----------
@@ -61,15 +61,16 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
     --------
     >>> import torch
     >>> from torch.autograd import grad
+    >>> from mvnorm import multivariate_normal_cdf as Phi
     >>> n = 4
     >>> x = 1 + torch.randn(n)
     >>> x.requires_grad = True
     >>> # Make a positive semi-definite matrix
     >>> A = torch.randn(n,n)
     >>> C = 1/n*torch.matmul(A,A.t())
-    >>> p = mvnorm.multivariate_normal_cdf(x,covariance_matrix=C)
+    >>> p = Phi(x,covariance_matrix=C)
     >>> p
-    tensor(0.3721, grad_fn=<MultivariateNormalCDFBackward>)
+    tensor(0.3721, grad_fn=<PhiHighDimBackward>)
     >>> grad(p,(x,))
     >>> (tensor([0.0085, 0.2510, 0.1272, 0.0332]),)
     """

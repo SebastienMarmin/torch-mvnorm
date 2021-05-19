@@ -7,7 +7,7 @@ Torch-MvNorm's documentation
 ========================================
 
 .. autofunction:: mvnorm.multivariate_normal_cdf
-.. autoclass:: mvnorm.autograd.MultivariateNormalCDF
+.. autoclass:: mvnorm.integration
 
 .. toctree::
    :maxdepth: 2
