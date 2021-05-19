@@ -12,7 +12,7 @@ def PhiDiagonal(z):
 
 def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tolerance=0.0):
     """Compute orthant probabilities ``P(Z_i < value_i, i = 1,...,d)`` for a multivariate normal random vector Z.
-    Closed-form backward differentiation with respect to mean or covariance is supported.
+    Closed-form backward differentiation with respect to `value`, `loc` or `covariance_matrix` is supported.
 
     Parameters
     ----------

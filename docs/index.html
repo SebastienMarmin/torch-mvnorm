@@ -160,7 +160,7 @@
 </ol>
 </li>
 <li><ol class="arabic simple" start="2">
-<li><p>Easily obtain partial derivatives of CDFs w.r.t location and covariance (and higher derivatives)</p></li>
+<li><p>Easily obtain partial derivatives of CDFs w.r.t location, mean and covariance (and higher derivatives)</p></li>
 </ol>
 </li>
 <li><ol class="arabic simple" start="3">
@@ -186,7 +186,7 @@
 <dt id="mvnorm.multivariate_normal_cdf">
 <code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">multivariate_normal_cdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">loc</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">covariance_matrix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">diagonality_tolerance</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mvnorm.multivariate_normal_cdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute orthant probabilities <code class="docutils literal notranslate"><span class="pre">P(Z_i</span> <span class="pre">&lt;</span> <span class="pre">value_i,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1,...,d)</span></code> for a multivariate normal random vector Z.
-Closed-form backward differentiation with respect to mean or covariance is supported.</p>
+Closed-form backward differentiation with respect to <cite>value</cite>, <cite>loc</cite> or <cite>covariance_matrix</cite> is supported.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
