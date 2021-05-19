@@ -50,7 +50,7 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
     well as the returned probability tensor are broadcasted to their
     common batch shape. See PyTorch' `broadcasting semantics
     <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
-    The integration is performed with Scipy's impementation of A. Genz method [1]_. See the integration parameters. TODO
+    The integration is performed with Scipy's impementation of A. Genz method [1]_.
     Partial derivative are computed using closed form formula, see e.g. Marmin et al. [2]_, p 13.
     References
     ----------
