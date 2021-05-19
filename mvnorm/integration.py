@@ -4,14 +4,17 @@ from numpy import array, int32,Inf
 from joblib import Parallel, delayed
 
 
-class ParameterBox:
-    pass
+class Integration:
+    def __init__(self):
+        self.maxpts = None
+        """ sdsdf """
+        self.abseps = 1e-6
+        self.releps = 1e-6
+        self.n_jobs = 1
 
-integration = ParameterBox() # Will contain all module-level values.
-integration.maxpts = None # global in module # "maxpts=None" means maxpts = d*1000
-integration.abseps = 1e-6 # global in module
-integration.releps = 1e-6
-integration.n_jobs = 1
+integration = Integration()
+"""Turns out the comment is rendered as a docstring if we put it underneath."""
+
 # TODO : allow more joblib control
 # TODO : forbid typos! like "integration.relesp"
 

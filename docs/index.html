@@ -152,13 +152,28 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="torch-mvnorm-s-documentation">
-<h1>Torch-MvNorm’s documentation<a class="headerlink" href="#torch-mvnorm-s-documentation" title="Permalink to this headline">¶</a></h1>
+  <section id="module-mvnorm">
+<span id="torch-mvnorm-s-documentation"></span><h1>Torch-MvNorm’s documentation<a class="headerlink" href="#module-mvnorm" title="Permalink to this headline">¶</a></h1>
+<p>This modules documentation.</p>
+<dl class="py data">
+<dt id="mvnorm.integration">
+<code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">integration</code><a class="headerlink" href="#mvnorm.integration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Controls the integration parameters:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">integration.maxpts</span></code>, the maximum number of density evaluations (default 1000×d);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">integration.abseps</span></code>, the absolute error tolerance (default 1e-6);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">integration.releps</span></code>, the relative error tolerance (default 1e-6);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">integration.n_jobs</span></code>, the number of jobs for <code class="docutils literal notranslate"><span class="pre">joblib.Parallel</span></code> (default to 1).</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
 <dl class="py function">
 <dt id="mvnorm.multivariate_normal_cdf">
 <code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">multivariate_normal_cdf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">loc</span><span class="o">=</span><span class="default_value">0.0</span></em>, <em class="sig-param"><span class="n">covariance_matrix</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">diagonality_tolerance</span><span class="o">=</span><span class="default_value">0.0</span></em><span class="sig-paren">)</span><a class="headerlink" href="#mvnorm.multivariate_normal_cdf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute orthant probabilities <code class="docutils literal notranslate"><span class="pre">P(Z_i</span> <span class="pre">&lt;</span> <span class="pre">value_i,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">1,...,d)</span></code> for a multivariate normal random vector Z.
-Closed-form backward derivatives with respect to mean and covariance is supported.</p>
+Closed-form backward differentiation with respect to mean or covariance is supported.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -185,7 +200,7 @@ a negative value.</p></li>
 <dd class="field-even"><p><strong>probability</strong> – The probability of the event <code class="docutils literal notranslate"><span class="pre">Y</span> <span class="pre">&lt;</span> <span class="pre">value</span></code>. Its shape is the
 the broadcasted batch shape (just a scalar if the batchshape is []).
 Closed form derivative are implemented if <cite>value</cite>  <cite>loc</cite>,
-<cite>covariance_matrix</cite> require a gradient. Can</p>
+<cite>covariance_matrix</cite> require a gradient.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -195,7 +210,7 @@ Closed form derivative are implemented if <cite>value</cite>  <cite>loc</cite>,
 <p>Parameters <cite>value</cite> and <cite>covariance_matrix</cite>, as
 well as the returned probability tensor are broadcasted to their
 common batch shape. See PyTorch’ <a class="reference external" href="https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics">broadcasting semantics</a>.
-The integration is performed with Scipy’s impementation of <a class="footnote-reference brackets" href="#id3" id="id1">1</a>. See the integration parameters. TODO
+The integration is performed with Scipy’s impementation of A. Genz method <a class="footnote-reference brackets" href="#id3" id="id1">1</a>. See the integration parameters. TODO
 Partial derivative are computed using closed form formula, see e.g. Marmin et al. <a class="footnote-reference brackets" href="#id4" id="id2">2</a>, p 13.</p>
 <p class="rubric">References</p>
 <dl class="footnote brackets">
@@ -220,16 +235,11 @@ t-Probabilities”, Journal of Computational and Graphical Statistics 11, pp. 95
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Phi</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">covariance_matrix</span><span class="o">=</span><span class="n">C</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">p</span>
 <span class="go">tensor(0.3721, grad_fn=&lt;PhiHighDimBackward&gt;)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">,(</span><span class="n">x</span><span class="p">,))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">tensor</span><span class="p">([</span><span class="mf">0.0085</span><span class="p">,</span> <span class="mf">0.2510</span><span class="p">,</span> <span class="mf">0.1272</span><span class="p">,</span> <span class="mf">0.0332</span><span class="p">]),)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">,(</span><span class="n">x</span><span class="p">,))[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">tensor([0.0085, 0.2510, 0.1272, 0.0332])</span>
 </pre></div>
 </div>
 </dd></dl>
-
-<dl class="py attribute">
-<dt id="mvnorm.integration">
-<code class="sig-prename descclassname">mvnorm.</code><code class="sig-name descname">integration</code><a class="headerlink" href="#mvnorm.integration" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <div class="toctree-wrapper compound">
 </div>

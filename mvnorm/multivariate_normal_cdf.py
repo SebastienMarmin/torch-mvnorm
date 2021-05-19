@@ -12,7 +12,7 @@ def PhiDiagonal(z):
 
 def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tolerance=0.0):
     """Compute orthant probabilities ``P(Z_i < value_i, i = 1,...,d)`` for a multivariate normal random vector Z.
-    Closed-form backward derivatives with respect to mean and covariance is supported.
+    Closed-form backward differentiation with respect to mean or covariance is supported.
 
     Parameters
     ----------
@@ -43,14 +43,14 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
         The probability of the event ``Y < value``. Its shape is the
         the broadcasted batch shape (just a scalar if the batchshape is []).
         Closed form derivative are implemented if `value`  `loc`,
-        `covariance_matrix` require a gradient. Can 
+        `covariance_matrix` require a gradient.
     Notes
     -------
     Parameters `value` and `covariance_matrix`, as 
     well as the returned probability tensor are broadcasted to their
     common batch shape. See PyTorch' `broadcasting semantics
     <https://pytorch.org/docs/stable/notes/broadcasting.html#broadcasting-semantics>`_.
-    The integration is performed with Scipy's impementation of [1]_. See the integration parameters. TODO
+    The integration is performed with Scipy's impementation of A. Genz method [1]_. See the integration parameters. TODO
     Partial derivative are computed using closed form formula, see e.g. Marmin et al. [2]_, p 13.
     References
     ----------
@@ -71,8 +71,8 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tol
     >>> p = Phi(x,covariance_matrix=C)
     >>> p
     tensor(0.3721, grad_fn=<PhiHighDimBackward>)
-    >>> grad(p,(x,))
-    >>> (tensor([0.0085, 0.2510, 0.1272, 0.0332]),)
+    >>> grad(p,(x,))[0]
+    tensor([0.0085, 0.2510, 0.1272, 0.0332])
     """
     m = loc-value # actually do P(Y-value<0)
     m_shape = m.shape
