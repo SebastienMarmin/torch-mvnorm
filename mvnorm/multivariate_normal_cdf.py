@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from torch import broadcast_to, ones, erfc
+from torch import broadcast_to, erfc, eye, tril, diagonal
 import torch
 from .Phi import Phi
 
@@ -7,11 +7,11 @@ def broadcast_shape(a,b):
     res = reversed(tuple(i if j==1 else (j if i==1 else (i if i==j else -1)) for i,j in zip_longest(reversed(a),reversed(b),fillvalue=1)))
     return list(res)
 
-def Phi1D(z):
-    return erfc(-z*0.70710678118654746171500846685)/2
+def PhiDiagonal(z):
+    return (erfc(-z*0.70710678118654746171500846685)/2).prod(-1)
     #                  ^ sqrt(2)/2
 
-def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,cov_diagonal=False):
+def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,diagonality_tolerance=0.0):
     """Compute orthant probabilities for a multivariate normal random vector Z 
      ``P(Z_i < value_i, i = 1,...,d)``. 
     Probability values can be returned with closed-form backward derivatives.
@@ -25,18 +25,20 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,cov_diagonal=Fa
     loc : torch.Tensor, optional
         Mean of the Gaussian vector. Default is zeros. Can have batch
         shape. Last dimension must be equal to d, the dimension of the
-        Gaussian vector.
+        Gaussian vector. If a float is provided, the value is repeated
+        for all the d components.
     covariance_matrix : torch.Tensor, optional
         Covariance matrix of the Gaussian vector.
         Can have batch shape. The two last dimensions must be equal to d,
         the dimension of the Gaussian vector. Identity matrix by default.
-        If the covariance is diagonal, `cov_diagonal` can be set to
-        ``True`` and `covariance_matrix` must have the same shape as 
-        `value` (or be broadcastable to `value`).
-    cov_diagonal=False : boolean, optional
-        See `covariance_matrix`. Avoid expensive numerical integration.
-    Returns
-    -------
+    diagonality_tolerance=0.0 : float, optional
+        Avoid expensive numerical integration if the maximum of all
+        off-diagonal values is below this tolerance (in absolute value),
+        as the covariance is considered diagonal. If there is a batch of
+        covariances (e.g. `covariance_matrix` has shape [N,d,d]), then
+        the numerical integrations are avoided only if ALL covariances
+        are considered diagonal. Diagonality check can be avoided with
+        a negative value.
     value : torch.Tensor
         The probability of the event ``Y < value``, with
         ``Y`` a Gaussian vector defined by `loc` and `covariance_matrix`.
@@ -71,23 +73,31 @@ def multivariate_normal_cdf(value,loc=0.0,covariance_matrix=None,cov_diagonal=Fa
     >>> grad(p,(x,))
     >>> (tensor([0.0085, 0.2510, 0.1272, 0.0332]),)
     """
-    x_shape = value.shape
-    d = x_shape[-1]
+    m = loc-value # actually do P(Y-value<0)
+    m_shape = m.shape
+    d = m_shape[-1]
     if covariance_matrix is None:
-        covariance_matrix = ones_like(value)
-        cov_diagonal = True
-    if cov_diagonal:
-        z = (value-loc)/covariance_matrix.sqrt()
-        return Phi1D(z).prod(-1)
+        covariance_matrix = eye(d)
+        off_diag = -0.0
+    else:
+        if diagonality_tolerance>=0:
+            if d>=2:
+                off_diag = tril(covariance_matrix.detach(),diagonal = -1).abs().max()
+            else:
+                off_diag = -0.0
+        else: # diagonality check forbidden by user
+            off_diag = diagonality_tolerance + 1
+    if off_diag<=diagonality_tolerance: # assumed diagonal
+        D = diagonal(covariance_matrix,dim1 = -2, dim2 = -1)
+        z = -m/D.sqrt()
+        return PhiDiagonal(z)
     cov_shape = covariance_matrix.shape[-2:]
     if len(cov_shape) < 2:
-        raise ValueError("covariance_matrix must have at least \
-                          two dimensions.")
-    d = cov_shape[-1]
-    if cov_shape[-2] != d:
-        raise ValueError("Covariance matrix must have the last two \
-            dimension equal to d. Here its "+str(cov_shape[-2:]))
-    m = loc-value # actually do P(Y-value<0)
+        raise ValueError("covariance_matrix must have at last " \
+                         "two dimensions when not diagonal.")
+    if cov_shape[-2] != d or cov_shape[-1] != d:
+        raise ValueError("Covariance matrix must have the last two " \
+                         "dimensions equal to d. Here it's "+str(list(cov_shape[-2:])))
     batch_shape = broadcast_shape(m.shape[:-1],cov_shape[:-2])
     vector_shape = batch_shape + [d]
     matrix_shape = batch_shape + [d,d]
