@@ -5,12 +5,11 @@ Installation is also simplified using SciPy.
 Torch-MvNorm
 --------------------------------------------------------------------------------
 
-Torch-MvNorm is a small Python package that allows
+With this small Python you can
 
-- Multivariate normal density integration, in particular computing cumulative distribution functions (CDFs)
-- Partial differentiaton of CDFs through implementation of closed-form formulas (see e.g. [Marmin et al. 2019](https://hal.archives-ouvertes.fr/hal-01133220v4/document), appendix 6)
-- Quantities manipulation within PyTorch tensor-based framework
-
+- Integrate multivariate normal density (CDFs)
+- Easily obtain partial derivatives of CDFs w.r.t location and covariance (implementation of closed-form formulas, see e.g. [Marmin et al. 2019](https://hal.archives-ouvertes.fr/hal-01133220v4/document), appendix 6)
+- Manipulate quantities within a tensor-based framework (e.g. broadcasting is fully supported)
 
 ---
 
