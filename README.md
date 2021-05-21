@@ -46,7 +46,7 @@ cd torch-mvnorm
 
 ### Test the code
 ```
-python3 tests/test_parallele.py
+python tests/test_parallele.py
 ```
 
 ## Getting Started
