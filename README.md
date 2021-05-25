@@ -1,13 +1,9 @@
-NEW: differentiation w.r.t. covariance is now supported!
-
-Installation is also simplified using SciPy.
-
 Torch-MvNorm
 --------------------------------------------------------------------------------
 
-With this small Python you can
+With this small piece of code you can
 
-- Integrate multivariate normal density (CDFs)
+- Integrate multivariate normal densities (CDFs)
 - Easily obtain partial derivatives of CDFs w.r.t location, mean and covariance (implementation of closed-form formulas, see e.g. [Marmin et al. 2019](https://hal.archives-ouvertes.fr/hal-01133220v4/document), appendix 6)
 - Manipulate quantities within a tensor-based framework (e.g. broadcasting is fully supported)
 
@@ -50,13 +46,13 @@ cd torch-mvnorm
 
 ### Test the code
 ```
-python3 tests/test_parallele.py
+python tests/test_parallele.py
 ```
 
 ## Getting Started
 
 - Run the code on [small examples](https://github.com/SebastienMarmin/torch-mvnorm/blob/master/tests).
-- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/). TODO updates.
+- Have a look at [the documentation](https://sebastienmarmin.github.io/torch-mvnorm/).
 
 ## Communication and contribution
 
