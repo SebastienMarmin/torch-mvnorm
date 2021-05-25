@@ -15,7 +15,6 @@ class Integration:
 integration = Integration()
 
 # TODO : allow more joblib control
-# TODO : forbid typos! like "integration.relesp"
 
 def integrate(l,u,m,c):
     return mvn.mvnun(l, u, m, c, integration.maxpts, integration.abseps, integration.releps)
