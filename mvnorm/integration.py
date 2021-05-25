@@ -7,7 +7,6 @@ from joblib import Parallel, delayed
 class Integration:
     def __init__(self):
         self.maxpts = None
-        """ sdsdf """
         self.abseps = 1e-6
         self.releps = 1e-6
         self.n_jobs = 1
