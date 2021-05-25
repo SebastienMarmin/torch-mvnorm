@@ -13,7 +13,6 @@ class Integration:
         self.n_jobs = 1
 
 integration = Integration()
-"""Turns out the comment is rendered as a docstring if we put it underneath."""
 
 # TODO : allow more joblib control
 # TODO : forbid typos! like "integration.relesp"
