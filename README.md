@@ -23,7 +23,7 @@ Torch-MvNorm is a library that consists of the two following components:
 - **integration** -- PyTorch-Fortan bridge for [Alan Genz's routine](http://www.math.wsu.edu/faculty/genz/software/fort77/mvndstpack.f) using SciPy.
 - **multivariate_normal_cdf** -- implementation of the formula of the multivariate normal CDF gradient, with respect to location and covariance.
 
-There is no GPU support. I am still looking for the best way to integrate normal densities with GPUs. If you want, please share your opinion on this, e.g. opening an issue.
+There is no GPU support. I am still looking for the best way to perform integrations of normal densities with GPUs. If you want, please share your opinion on this, e.g. opening an issue.
 
 ## Installation
 
