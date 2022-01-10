@@ -8,7 +8,7 @@ from time import time
 from numpy import sqrt
 
 # Computation of P(Y<0), Y ~ N(m,C), by density integration.
-batch_dim = [2,8] # do 276 probability computations in one tensor, can be "[]"
+batch_dim = [2,8] # do 16 probability computations in one tensor, can be a scalar ("[]")
 
 d = 23 # dimension of the random vector
 x = randn(*batch_dim,d)+0.5*sqrt(d)
