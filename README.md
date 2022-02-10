@@ -62,7 +62,7 @@ m.requires_grad = True
 C.requires_grad = True
 
 P = Phi(x,m,C)
-dPdx, dPdm, dPdC = grad(P,(x,m,C))
+dPdx, dPdm, dPdC = grad(P,(x,m,C)) # Bien sûr, dPdx = - dPdm.
 ```
 
 ## Getting Started
